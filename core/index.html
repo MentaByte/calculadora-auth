@@ -13,15 +13,27 @@
     :root{
       --btn-size: 23.8vw;
       --gap: 1.1vw;
+      --num-bg: #fbd9d7;
+      --num-active: #fcb3b0;
+      --special-bg: #f9b9b6;
+      --special-active: #f49490;
+      --equal-bg: #6b5f00;
+      --equal-active: #8a7a00;
+      --bg-color: #fff8f7;
+      --font-color: #000;
+      --result-color: #6b5f00;
+      --font-family: Roboto, sans-serif;
+      --font-size: 13.1vw;
+      --result-font-size: 6.9vw;
     }
     html, body {
       margin: 0;
       padding: 0;
-      font-family: Roboto, sans-serif;
-      background: #fff8f7;
+      font-family: var(--font-family);
+      background: var(--bg-color);
       -webkit-user-select: none;
       user-select: none;
-      overflow: hidden;  /* evita scroll */
+      overflow: hidden;
     }
     
     /* Loading Screen */
@@ -63,10 +75,55 @@
       font-size: 14px;
     }
     
+    /* PWA Install Banner */
+    #installBanner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #6b5f00 0%, #8a7a00 100%);
+      color: white;
+      padding: 12px 15px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    
+    #installBanner.show {
+      display: flex;
+    }
+    
+    #installBanner .message {
+      flex: 1;
+      font-size: 14px;
+      margin-right: 10px;
+    }
+    
+    #installBanner button {
+      background: white;
+      color: #6b5f00;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+      margin-left: 5px;
+    }
+    
+    #installBanner .close-btn {
+      background: transparent;
+      color: white;
+      padding: 5px 10px;
+      font-size: 18px;
+    }
+    
     /* Calculator */
     .calculator {
       display: none;
-      margin-top: var(--btn-size);  /* desplaza la calculadora hacia abajo */
+      margin-top: var(--btn-size);
       flex-direction: column;
       box-sizing: border-box;
     }
@@ -83,42 +140,45 @@
       flex-direction: column;
       justify-content: flex-end;
       align-items: flex-end;
-      min-height: calc(var(--btn-size) * 2); /* espacio fijo para operación + resultado */
+      min-height: calc(var(--btn-size) * 2);
     }
     
     .operation {
-      font-size: 13.1vw;
-      color: #000;
+      font-size: var(--font-size);
+      color: var(--font-color);
       word-wrap: break-word;
       text-align: right;
       line-height: 1;
+      font-family: var(--font-family);
     }
     
     .result {
-      font-size: 6.9vw;
-      color: #6b5f00;
-      margin-top: 1vw;  /* separación visual de la operación */
+      font-size: var(--result-font-size);
+      color: var(--result-color);
+      margin-top: 1vw;
       line-height: 1;
+      font-family: var(--font-family);
     }
     
     .buttons {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      grid-auto-rows: var(--btn-size);   /* filas fijas */
+      grid-auto-rows: var(--btn-size);
       gap: var(--gap);
       padding: var(--gap);
-      background: #fff8f7;
+      background: var(--bg-color);
       box-sizing: border-box;
     }
+    
     button {
       border: none;
       border-radius: 50%;
       font-size: 7.1vw;
-      font-weight: bold;   /* negrita */
+      font-weight: bold;
       width: 100%;
       aspect-ratio: 1 / 1;
-      background: #fbd9d7;
-      color: #000;
+      background: var(--num-bg);
+      color: var(--font-color);
       cursor: pointer;
       transition: background 0.05s, transform 0.03s;
       display: flex;
@@ -129,18 +189,170 @@
       box-sizing: border-box;
       justify-self: center;
       align-self: center;
+      font-family: var(--font-family);
     }
+    
     button:active {
-      background: #fcb3b0;
+      background: var(--num-active);
       transform: scale(0.97);
     }
-    button.special { background: #f9b9b6; }
-    button.special:active { background: #f49490; }
+    
+    button.special { 
+      background: var(--special-bg);
+    }
+    
+    button.special:active { 
+      background: var(--special-active);
+    }
+    
     .equal {
-      background: #6b5f00;
+      background: var(--equal-bg);
       color: #fff;
     }
-    .equal:active { background: #8a7a00; }
+    
+    .equal:active { 
+      background: var(--equal-active);
+    }
+    
+    /* Secret Menu */
+    #secretMenu {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+    
+    #secretMenu.show {
+      display: flex;
+    }
+    
+    .menu-content {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 400px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    
+    .menu-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .menu-header h2 {
+      margin: 0;
+      color: #333;
+      font-size: 20px;
+    }
+    
+    .menu-close {
+      background: #dc3545;
+      color: white;
+      border: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    
+    .menu-item {
+      margin-bottom: 20px;
+    }
+    
+    .menu-item label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    .menu-item input[type="text"],
+    .menu-item input[type="number"],
+    .menu-item input[type="color"],
+    .menu-item input[type="range"],
+    .menu-item select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    
+    .menu-item input[type="color"] {
+      height: 45px;
+      cursor: pointer;
+    }
+    
+    .menu-item input[type="range"] {
+      padding: 5px;
+    }
+    
+    .slider-value {
+      display: inline-block;
+      margin-left: 10px;
+      color: #6b5f00;
+      font-weight: bold;
+    }
+    
+    .menu-item.primary {
+      background: #fff3cd;
+      border: 2px solid #6b5f00;
+      padding: 15px;
+      border-radius: 10px;
+    }
+    
+    .menu-item.primary label {
+      color: #6b5f00;
+      font-size: 16px;
+    }
+    
+    .menu-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .menu-buttons button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    .btn-save {
+      background: #28a745;
+      color: white;
+    }
+    
+    .btn-reset {
+      background: #dc3545;
+      color: white;
+    }
+    
     html, body { -ms-touch-action: manipulation; touch-action: manipulation; }
   </style>
 </head>
@@ -149,6 +361,78 @@
   <div id="loading">
     <div class="spinner"></div>
     <p>Validando acceso...</p>
+  </div>
+
+  <!-- PWA Install Banner -->
+  <div id="installBanner">
+    <div class="message">
+      📱 Instala esta app para una mejor experiencia
+    </div>
+    <button onclick="installPWA()">Instalar</button>
+    <button class="close-btn" onclick="closeInstallBanner()">×</button>
+  </div>
+
+  <!-- Secret Menu -->
+  <div id="secretMenu">
+    <div class="menu-content">
+      <div class="menu-header">
+        <h2>⚙️ Configuración</h2>
+        <button class="menu-close" onclick="closeSecretMenu()">×</button>
+      </div>
+      
+      <div class="menu-item primary">
+        <label>⭐ Número a forzar:</label>
+        <input type="number" id="forcedNumber" placeholder="Ingresa número a forzar" step="0.01">
+      </div>
+      
+      <div class="menu-item">
+        <label>🎨 Color botones numéricos:</label>
+        <input type="color" id="numBgColor" value="#fbd9d7">
+      </div>
+      
+      <div class="menu-item">
+        <label>🎨 Color botones de signos:</label>
+        <input type="color" id="specialBgColor" value="#f9b9b6">
+      </div>
+      
+      <div class="menu-item">
+        <label>🎨 Color botón igual:</label>
+        <input type="color" id="equalBgColor" value="#6b5f00">
+      </div>
+      
+      <div class="menu-item">
+        <label>🎨 Color de fondo:</label>
+        <input type="color" id="bgColor" value="#fff8f7">
+      </div>
+      
+      <div class="menu-item">
+        <label>🎨 Color de fuente:</label>
+        <input type="color" id="fontColor" value="#000000">
+      </div>
+      
+      <div class="menu-item">
+        <label>🔤 Fuente:</label>
+        <select id="fontFamily">
+          <option value="Roboto, sans-serif">Roboto</option>
+          <option value="Arial, sans-serif">Arial</option>
+          <option value="'Courier New', monospace">Courier</option>
+          <option value="Georgia, serif">Georgia</option>
+          <option value="'Comic Sans MS', cursive">Comic Sans</option>
+          <option value="Verdana, sans-serif">Verdana</option>
+        </select>
+      </div>
+      
+      <div class="menu-item">
+        <label>📏 Tamaño de fuente: <span class="slider-value" id="fontSizeValue">100%</span></label>
+        <input type="range" id="fontSize" min="50" max="150" value="100" 
+               oninput="document.getElementById('fontSizeValue').textContent = this.value + '%'">
+      </div>
+      
+      <div class="menu-buttons">
+        <button class="btn-save" onclick="saveSettings()">💾 Guardar</button>
+        <button class="btn-reset" onclick="resetSettings()">🔄 Restaurar</button>
+      </div>
+    </div>
   </div>
 
   <!-- Calculator App -->
@@ -160,7 +444,7 @@
     <div class="buttons">
       <button class="special" onclick="clearDisplay()">AC</button>
       <button class="special" onclick="forceNumber()">()</button>
-      <button class="special" onclick="noop()">%</button>
+      <button class="special" onclick="openSecretMenu()">%</button>
       <button class="special" onclick="noop()">÷</button>
       <button onclick="appendNumber(7)">7</button>
       <button onclick="appendNumber(8)">8</button>
@@ -185,6 +469,184 @@
     import { validateSession, clearSession } from "../auth.js";
 
     // ================================================
+    // PWA INSTALLATION
+    // ================================================
+    let deferredPrompt;
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      showInstallBanner();
+    });
+    
+    function showInstallBanner() {
+      const banner = document.getElementById('installBanner');
+      const dismissed = localStorage.getItem('installBannerDismissed');
+      
+      // Si ya está instalada o el usuario la cerró, no mostrar
+      if (window.matchMedia('(display-mode: standalone)').matches || dismissed === 'true') {
+        return;
+      }
+      
+      banner.classList.add('show');
+    }
+    
+    window.installPWA = async function() {
+      if (!deferredPrompt) {
+        alert('La instalación no está disponible en este navegador.');
+        return;
+      }
+      
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      
+      if (outcome === 'accepted') {
+        console.log('Usuario instaló la PWA');
+      }
+      
+      deferredPrompt = null;
+      document.getElementById('installBanner').classList.remove('show');
+    }
+    
+    window.closeInstallBanner = function() {
+      document.getElementById('installBanner').classList.remove('show');
+      localStorage.setItem('installBannerDismissed', 'true');
+    }
+    
+    // Si ya está instalada, ajustar el margen
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      document.documentElement.style.setProperty('--btn-size', '23.8vw');
+    }
+
+    // ================================================
+    // SECRET MENU FUNCTIONS
+    // ================================================
+    window.openSecretMenu = function() {
+      const menu = document.getElementById('secretMenu');
+      
+      // Cargar valores actuales en el formulario
+      const settings = loadSettings();
+      document.getElementById('forcedNumber').value = settings.forcedNumber || '';
+      document.getElementById('numBgColor').value = settings.numBgColor;
+      document.getElementById('specialBgColor').value = settings.specialBgColor;
+      document.getElementById('equalBgColor').value = settings.equalBgColor;
+      document.getElementById('bgColor').value = settings.bgColor;
+      document.getElementById('fontColor').value = settings.fontColor;
+      document.getElementById('fontFamily').value = settings.fontFamily;
+      document.getElementById('fontSize').value = settings.fontSizePercent;
+      document.getElementById('fontSizeValue').textContent = settings.fontSizePercent + '%';
+      
+      menu.classList.add('show');
+    }
+    
+    window.closeSecretMenu = function() {
+      document.getElementById('secretMenu').classList.remove('show');
+    }
+    
+    window.saveSettings = function() {
+      const settings = {
+        forcedNumber: document.getElementById('forcedNumber').value,
+        numBgColor: document.getElementById('numBgColor').value,
+        specialBgColor: document.getElementById('specialBgColor').value,
+        equalBgColor: document.getElementById('equalBgColor').value,
+        bgColor: document.getElementById('bgColor').value,
+        fontColor: document.getElementById('fontColor').value,
+        fontFamily: document.getElementById('fontFamily').value,
+        fontSizePercent: document.getElementById('fontSize').value
+      };
+      
+      localStorage.setItem('calcSettings', JSON.stringify(settings));
+      
+      // Actualizar el número forzado globalmente
+      if (settings.forcedNumber) {
+        window.forced = parseFloat(settings.forcedNumber);
+      } else {
+        window.forced = null;
+      }
+      
+      applySettings(settings);
+      closeSecretMenu();
+      alert('✅ Configuración guardada');
+    }
+    
+    window.resetSettings = function() {
+      if (!confirm('¿Restaurar configuración por defecto?')) return;
+      
+      localStorage.removeItem('calcSettings');
+      
+      const defaults = {
+        forcedNumber: '',
+        numBgColor: '#fbd9d7',
+        specialBgColor: '#f9b9b6',
+        equalBgColor: '#6b5f00',
+        bgColor: '#fff8f7',
+        fontColor: '#000000',
+        fontFamily: 'Roboto, sans-serif',
+        fontSizePercent: '100'
+      };
+      
+      applySettings(defaults);
+      window.forced = null;
+      closeSecretMenu();
+      alert('🔄 Configuración restaurada');
+    }
+    
+    function loadSettings() {
+      const saved = localStorage.getItem('calcSettings');
+      
+      if (saved) {
+        return JSON.parse(saved);
+      }
+      
+      return {
+        forcedNumber: '',
+        numBgColor: '#fbd9d7',
+        specialBgColor: '#f9b9b6',
+        equalBgColor: '#6b5f00',
+        bgColor: '#fff8f7',
+        fontColor: '#000000',
+        fontFamily: 'Roboto, sans-serif',
+        fontSizePercent: '100'
+      };
+    }
+    
+    function applySettings(settings) {
+      const root = document.documentElement;
+      
+      // Colores
+      root.style.setProperty('--num-bg', settings.numBgColor);
+      root.style.setProperty('--num-active', adjustBrightness(settings.numBgColor, -10));
+      root.style.setProperty('--special-bg', settings.specialBgColor);
+      root.style.setProperty('--special-active', adjustBrightness(settings.specialBgColor, -10));
+      root.style.setProperty('--equal-bg', settings.equalBgColor);
+      root.style.setProperty('--equal-active', adjustBrightness(settings.equalBgColor, 15));
+      root.style.setProperty('--bg-color', settings.bgColor);
+      root.style.setProperty('--font-color', settings.fontColor);
+      
+      // Fuente
+      root.style.setProperty('--font-family', settings.fontFamily);
+      
+      // Tamaño
+      const baseFontSize = 13.1;
+      const baseResultSize = 6.9;
+      const multiplier = settings.fontSizePercent / 100;
+      
+      root.style.setProperty('--font-size', (baseFontSize * multiplier) + 'vw');
+      root.style.setProperty('--result-font-size', (baseResultSize * multiplier) + 'vw');
+    }
+    
+    function adjustBrightness(color, percent) {
+      const num = parseInt(color.replace("#",""), 16);
+      const amt = Math.round(2.55 * percent);
+      const R = (num >> 16) + amt;
+      const G = (num >> 8 & 0x00FF) + amt;
+      const B = (num & 0x0000FF) + amt;
+      return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 +
+        (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255))
+        .toString(16).slice(1);
+    }
+
+    // ================================================
     // VALIDACIÓN DE SESIÓN AL CARGAR
     // ================================================
     async function initApp() {
@@ -200,6 +662,22 @@
           loadingEl.classList.add('hidden');
           calculatorEl.classList.add('visible');
           
+          // Cargar y aplicar configuración guardada
+          const settings = loadSettings();
+          applySettings(settings);
+          
+          // Cargar número forzado si existe
+          if (settings.forcedNumber) {
+            window.forced = parseFloat(settings.forcedNumber);
+          }
+          
+          // Mostrar banner de instalación si aplica
+          setTimeout(() => {
+            if (deferredPrompt) {
+              showInstallBanner();
+            }
+          }, 1000);
+          
         } else if (result.error === "revoked") {
           // ❌ Acceso revocado - redirigir
           console.log('❌ Acceso revocado');
@@ -210,6 +688,13 @@
           console.log('⚠️ Sin internet - usando caché');
           loadingEl.classList.add('hidden');
           calculatorEl.classList.add('visible');
+          
+          // Cargar configuración guardada
+          const settings = loadSettings();
+          applySettings(settings);
+          if (settings.forcedNumber) {
+            window.forced = parseFloat(settings.forcedNumber);
+          }
           
         } else {
           // ❌ Sin sesión - redirigir a inicio
@@ -325,12 +810,8 @@
     }
     
     function forceNumber() {
-      let num = prompt("Número a forzar (solo dígitos):");
-      if (num !== null && /^\d+(\.\d+)?$/.test(num)) {
-        forced = parseFloat(num);
-      } else if (num !== null) {
-        alert("Por favor ingresa solo números válidos");
-      }
+      // Abrir el menú secreto directamente para configurar el número forzado
+      openSecretMenu();
     }
     
     function activateTrap() {

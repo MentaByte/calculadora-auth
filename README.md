@@ -181,6 +181,60 @@ CREATE TABLE licenses (
 - ✅ Instalable como PWA
 - ✅ Service Worker optimizado
 - ✅ Calculadora Android fake completa
+- ✅ **Banner de instalación PWA inmediato**
+- ✅ **Menú secreto completo (botón %)**
+  - ⭐ Configurar número a forzar
+  - 🎨 Personalizar todos los colores
+  - 🔤 Cambiar fuente (6 opciones)
+  - 📏 Ajustar tamaño de texto
+  - 💾 Persistencia de configuración
+
+## 🎨 Menú Secreto
+
+Presiona el botón **%** para acceder al menú de configuración avanzada:
+
+### Funciones disponibles:
+1. **⭐ Número a forzar** (función principal)
+   - Ingresa el número que deseas mostrar al calcular
+   - Se guarda automáticamente
+
+2. **🎨 Personalización de colores**
+   - Color de botones numéricos
+   - Color de botones de signos
+   - Color del botón igual
+   - Color de fondo
+   - Color de fuente
+
+3. **🔤 Fuentes disponibles**
+   - Roboto (por defecto)
+   - Arial
+   - Courier (monospace)
+   - Georgia
+   - Comic Sans
+   - Verdana
+
+4. **📏 Tamaño de fuente**
+   - Ajustable de 50% a 150%
+   - Control con slider
+
+### 💾 Persistencia
+- Toda la configuración se guarda automáticamente
+- Se carga al abrir la app
+- Botón "Restaurar" para volver a valores por defecto
+
+## 📱 Banner de Instalación PWA
+
+- Aparece **inmediatamente** al abrir la app en navegador
+- Botón "Instalar" para agregar a pantalla de inicio
+- Se puede cerrar (no vuelve a aparecer)
+- No aparece si ya está instalada
+
+### ¿Por qué es importante instalar?
+La calculadora dentro del navegador no parece una app real. Al instalarla:
+- ✅ Aparece como app independiente
+- ✅ No muestra barra de direcciones
+- ✅ Icono en pantalla de inicio
+- ✅ Experiencia de app nativa
 
 ---
 
