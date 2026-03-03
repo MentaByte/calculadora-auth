@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#6b5f00">
+  <title>Calculadora</title>
+  
+  <!-- PWA -->
+  <link rel="manifest" href="../manifest.json">
+  
+  <style>
+    :root{
+      --btn-size: 23.8vw;
+      --gap: 1.1vw;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: Roboto, sans-serif;
+      background: #fff8f7;
+      -webkit-user-select: none;
+      user-select: none;
+      overflow: hidden;  /* evita scroll */
+    }
+    
+    /* Loading Screen */
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #fff8f7;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    
+    #loading.hidden {
+      display: none;
+    }
+    
+    .spinner {
+      border: 4px solid #fbd9d7;
+      border-top: 4px solid #6b5f00;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    #loading p {
+      color: #6b5f00;
+      font-size: 14px;
+    }
+    
+    /* Calculator */
+    .calculator {
+      display: none;
+      margin-top: var(--btn-size);  /* desplaza la calculadora hacia abajo */
+      flex-direction: column;
+      box-sizing: border-box;
+    }
+    
+    .calculator.visible {
+      display: flex;
+    }
+    
+    .display {
+      width: 100%;
+      padding: 2vw;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-end;
+      min-height: calc(var(--btn-size) * 2); /* espacio fijo para operación + resultado */
+    }
+    
+    .operation {
+      font-size: 13.1vw;
+      color: #000;
+      word-wrap: break-word;
+      text-align: right;
+      line-height: 1;
+    }
+    
+    .result {
+      font-size: 6.9vw;
+      color: #6b5f00;
+      margin-top: 1vw;  /* separación visual de la operación */
+      line-height: 1;
+    }
+    
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-auto-rows: var(--btn-size);   /* filas fijas */
+      gap: var(--gap);
+      padding: var(--gap);
+      background: #fff8f7;
+      box-sizing: border-box;
+    }
+    button {
+      border: none;
+      border-radius: 50%;
+      font-size: 7.1vw;
+      font-weight: bold;   /* negrita */
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: #fbd9d7;
+      color: #000;
+      cursor: pointer;
+      transition: background 0.05s, transform 0.03s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+      box-sizing: border-box;
+      justify-self: center;
+      align-self: center;
+    }
+    button:active {
+      background: #fcb3b0;
+      transform: scale(0.97);
+    }
+    button.special { background: #f9b9b6; }
+    button.special:active { background: #f49490; }
+    .equal {
+      background: #6b5f00;
+      color: #fff;
+    }
+    .equal:active { background: #8a7a00; }
+    html, body { -ms-touch-action: manipulation; touch-action: manipulation; }
+  </style>
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Validando acceso...</p>
+  </div>
+
+  <!-- Calculator App -->
+  <div class="calculator" id="calculatorApp">
+    <div class="display">
+      <div class="operation" id="operation">0</div>
+      <div class="result" id="result"></div>
+    </div>
+    <div class="buttons">
+      <button class="special" onclick="clearDisplay()">AC</button>
+      <button class="special" onclick="forceNumber()">()</button>
+      <button class="special" onclick="noop()">%</button>
+      <button class="special" onclick="noop()">÷</button>
+      <button onclick="appendNumber(7)">7</button>
+      <button onclick="appendNumber(8)">8</button>
+      <button onclick="appendNumber(9)">9</button>
+      <button class="special" onclick="noop()">×</button>
+      <button onclick="appendNumber(4)">4</button>
+      <button onclick="appendNumber(5)">5</button>
+      <button onclick="appendNumber(6)">6</button>
+      <button class="special" onclick="activateTrap()">-</button>
+      <button onclick="appendNumber(1)">1</button>
+      <button onclick="appendNumber(2)">2</button>
+      <button onclick="appendNumber(3)">3</button>
+      <button class="special" onclick="add()">+</button>
+      <button onclick="appendNumber(0)">0</button>
+      <button onclick="appendDot()">.</button>
+      <button onclick="backspace()">⌫</button>
+      <button class="equal" onclick="calculate()">=</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { validateSession, clearSession } from "../auth.js";
+
+    // ================================================
+    // VALIDACIÓN DE SESIÓN AL CARGAR
+    // ================================================
+    async function initApp() {
+      const loadingEl = document.getElementById('loading');
+      const calculatorEl = document.getElementById('calculatorApp');
+
+      try {
+        const result = await validateSession();
+
+        if (result.valid) {
+          // ✅ Sesión válida - cargar calculadora
+          console.log('✅ Sesión válida');
+          loadingEl.classList.add('hidden');
+          calculatorEl.classList.add('visible');
+          
+        } else if (result.error === "revoked") {
+          // ❌ Acceso revocado - redirigir
+          console.log('❌ Acceso revocado');
+          window.location.href = "../fenix.html";
+          
+        } else if (result.no_internet) {
+          // ⚠️ Sin internet pero con sesión previa válida
+          console.log('⚠️ Sin internet - usando caché');
+          loadingEl.classList.add('hidden');
+          calculatorEl.classList.add('visible');
+          
+        } else {
+          // ❌ Sin sesión - redirigir a inicio
+          console.log('❌ Sin sesión válida');
+          alert('No tienes acceso. Necesitas un código de activación.');
+          window.location.href = "../";
+        }
+      } catch (error) {
+        console.error('Error al validar sesión:', error);
+        loadingEl.classList.add('hidden');
+        alert('Error al validar tu sesión. Intenta de nuevo.');
+      }
+    }
+
+    // ================================================
+    // REGISTRO DEL SERVICE WORKER
+    // ================================================
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('../sw.js')
+        .then(reg => console.log('✅ Service Worker registrado'))
+        .catch(err => console.error('❌ Error al registrar SW:', err));
+    }
+
+    // ================================================
+    // INICIAR APP
+    // ================================================
+    initApp();
+  </script>
+
+  <!-- Calculator Logic -->
+  <script>
+    let operation = document.getElementById("operation");
+    let result = document.getElementById("result");
+    let currentOperation = "";
+    let trapMode = false;
+    let trapLocked = false;
+    let forced = null;
+    let partialVisible = false;
+    let lastOperation = "";
+    let lastPartialVisible = false;
+    let lastResultText = "";
+    let justCalculated = false;
+    
+    function updateDisplay() {
+      operation.textContent = currentOperation || "0";
+      if (!partialVisible) {
+        result.textContent = "";
+        return;
+      }
+      try {
+        let expr = currentOperation.replace(/[+\-×÷.]$/, "");
+        let calcResult = eval(expr);
+        if (!isNaN(calcResult)) {
+          result.textContent = Number(calcResult).toLocaleString("es-CO");
+        } else {
+          result.textContent = "";
+        }
+      } catch {
+        result.textContent = "";
+      }
+    }
+    
+    function appendNumber(num) {
+      if (trapLocked) return;
+      if (trapMode) {
+        showTrapResult();
+        return;
+      }
+      let prevChar = currentOperation.slice(-1);
+      currentOperation += num;
+      if (prevChar === '+' && !partialVisible) {
+        partialVisible = true;
+      }
+      justCalculated = false;
+      updateDisplay();
+    }
+    
+    function appendDot() {
+      if (trapLocked) return;
+      currentOperation += ".";
+      justCalculated = false;
+      updateDisplay();
+    }
+    
+    function add() {
+      if (trapLocked) return;
+      currentOperation += "+";
+      justCalculated = false;
+      updateDisplay();
+    }
+    
+    function clearDisplay() {
+      if (trapLocked) return;
+      currentOperation = "";
+      result.textContent = "";
+      partialVisible = false;
+      justCalculated = false;
+      updateDisplay();
+    }
+    
+    function backspace() {
+      if (trapLocked) return;
+      if (justCalculated) {
+        currentOperation = lastOperation;
+        partialVisible = lastPartialVisible;
+        result.textContent = lastResultText;
+        justCalculated = false;
+        updateDisplay();
+        return;
+      }
+      currentOperation = currentOperation.slice(0, -1);
+      updateDisplay();
+    }
+    
+    function forceNumber() {
+      let num = prompt("Número a forzar (solo dígitos):");
+      if (num !== null && /^\d+(\.\d+)?$/.test(num)) {
+        forced = parseFloat(num);
+      } else if (num !== null) {
+        alert("Por favor ingresa solo números válidos");
+      }
+    }
+    
+    function activateTrap() {
+      if (trapLocked) return;
+      trapMode = true;
+      currentOperation += "+";
+      justCalculated = false;
+      updateDisplay();
+    }
+    
+    function showTrapResult() {
+      let actual = eval(currentOperation.replace(/\+$/, "")) || 0;
+      if (forced !== null) {
+        let needed = forced - actual;
+        currentOperation += needed;
+        updateDisplay();
+        trapLocked = true;
+      } else {
+        result.textContent = "⚠ No forzado";
+      }
+    }
+    
+    function calculate() {
+      try {
+        let calcResult = eval(currentOperation);
+        lastOperation = currentOperation;
+        lastPartialVisible = partialVisible;
+        lastResultText = result.textContent;
+        if (trapMode) {
+          operation.textContent = forced;
+          result.textContent = "";
+          currentOperation = forced.toString();
+        } else {
+          result.textContent = Number(calcResult).toLocaleString("es-CO");
+          operation.textContent = result.textContent;
+          currentOperation = calcResult.toString();
+        }
+        trapMode = false;
+        trapLocked = false;
+        partialVisible = false;
+        justCalculated = true;
+        updateDisplay();
+      } catch {
+        result.textContent = "Error";
+      }
+    }
+    
+    function noop() {}
+  </script>
+</body>
+</html>

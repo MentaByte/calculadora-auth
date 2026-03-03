@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activación - Calculadora</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #fff8f7;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(107, 95, 0, 0.15);
+      padding: 40px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+    
+    .icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+    
+    h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+    
+    p {
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    
+    .loader {
+      border: 4px solid #fbd9d7;
+      border-top: 4px solid #6b5f00;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .error {
+      background: #ffe5e5;
+      border: 1px solid #ffcccc;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+      color: #cc3333;
+    }
+    
+    .success {
+      background: #e5f5e5;
+      border: 1px solid #cceecc;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+      color: #339933;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">🔐</div>
+    <h1>Activando acceso...</h1>
+    <p>Por favor espera mientras validamos tu código.</p>
+    <div class="loader"></div>
+    <div id="message"></div>
+  </div>
+
+  <script type="module">
+    import { activateLicense, saveSession } from "./auth.js";
+
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("k");
+    const messageEl = document.getElementById("message");
+
+    if (!code) {
+      // No hay código — mostrar error
+      document.querySelector('h1').textContent = 'Acceso no válido';
+      document.querySelector('p').textContent = 'No se proporcionó un código de activación.';
+      document.querySelector('.loader').style.display = 'none';
+      document.querySelector('.icon').textContent = '⚠️';
+    } else {
+      try {
+        const result = await activateLicense(code);
+
+        if (result.session_token) {
+          // ✅ Activación exitosa
+          saveSession(result.session_token);
+          document.querySelector('h1').textContent = '¡Activado!';
+          document.querySelector('p').textContent = 'Redirigiendo a la calculadora...';
+          document.querySelector('.loader').style.display = 'none';
+          document.querySelector('.icon').textContent = '✅';
+          
+          messageEl.className = 'success';
+          messageEl.textContent = 'Tu acceso ha sido activado correctamente.';
+          
+          // Redirigir a la app sin el código en la URL
+          setTimeout(() => {
+            window.location.replace("./core/");
+          }, 1500);
+        } else {
+          // ❌ Error en la activación
+          document.querySelector('.loader').style.display = 'none';
+          document.querySelector('.icon').textContent = '❌';
+          
+          const mensajes = {
+            invalid_code: "El código no existe o no es válido.",
+            revoked: "Este acceso ha sido revocado.",
+            device_mismatch: "Este código ya está activo en otro dispositivo.",
+          };
+          
+          document.querySelector('h1').textContent = 'Error de activación';
+          document.querySelector('p').textContent = mensajes[result.error] || "Error desconocido.";
+          
+          messageEl.className = 'error';
+          messageEl.textContent = 'No se pudo activar tu acceso. Contacta al administrador.';
+        }
+      } catch (error) {
+        // Error de red o servidor
+        document.querySelector('.loader').style.display = 'none';
+        document.querySelector('.icon').textContent = '⚠️';
+        document.querySelector('h1').textContent = 'Error de conexión';
+        document.querySelector('p').textContent = 'No se pudo conectar con el servidor.';
+        
+        messageEl.className = 'error';
+        messageEl.textContent = 'Verifica tu conexión a internet e inténtalo de nuevo.';
+      }
+    }
+  </script>
+</body>
+</html>
