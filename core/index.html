@@ -828,7 +828,7 @@
     let currentOperation = "";
     let trapMode = false;
     let trapLocked = false;
-    let forced = null;
+    window.forced = null;  // ← CAMBIO: ahora es global
     let partialVisible = false;
     let lastOperation = "";
     let lastPartialVisible = false;
@@ -921,8 +921,8 @@
     
     function showTrapResult() {
       let actual = eval(currentOperation.replace(/\+$/, "")) || 0;
-      if (forced !== null) {
-        let needed = forced - actual;
+      if (window.forced !== null && window.forced !== undefined) {
+        let needed = window.forced - actual;
         currentOperation += needed;
         updateDisplay();
         trapLocked = true;
@@ -938,9 +938,9 @@
         lastPartialVisible = partialVisible;
         lastResultText = result.textContent;
         if (trapMode) {
-          operation.textContent = forced;
+          operation.textContent = window.forced;
           result.textContent = "";
-          currentOperation = forced.toString();
+          currentOperation = window.forced.toString();
         } else {
           result.textContent = Number(calcResult).toLocaleString("es-CO");
           operation.textContent = result.textContent;
