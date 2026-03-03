@@ -25,6 +25,7 @@
       --font-family: Roboto, sans-serif;
       --font-size: 13.1vw;
       --result-font-size: 6.9vw;
+      --btn-font-size: 7.1vw;
     }
     html, body {
       margin: 0;
@@ -173,7 +174,7 @@
     button {
       border: none;
       border-radius: 50%;
-      font-size: 7.1vw;
+      font-size: var(--btn-font-size);
       font-weight: bold;
       width: 100%;
       aspect-ratio: 1 / 1;
@@ -304,6 +305,23 @@
       cursor: pointer;
     }
     
+    .color-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .color-row input[type="color"] {
+      flex: 0 0 60px;
+      width: 60px;
+    }
+    
+    .color-row input[type="text"] {
+      flex: 1;
+      text-transform: uppercase;
+      font-family: monospace;
+    }
+    
     .menu-item input[type="range"] {
       padding: 5px;
     }
@@ -387,27 +405,42 @@
       
       <div class="menu-item">
         <label>🎨 Color botones numéricos:</label>
-        <input type="color" id="numBgColor" value="#fbd9d7">
+        <div class="color-row">
+          <input type="color" id="numBgColor" value="#fbd9d7" oninput="syncHex(this, 'numBgHex')">
+          <input type="text" id="numBgHex" placeholder="#FDBDD7" maxlength="7" oninput="syncColor(this, 'numBgColor')">
+        </div>
       </div>
       
       <div class="menu-item">
         <label>🎨 Color botones de signos:</label>
-        <input type="color" id="specialBgColor" value="#f9b9b6">
+        <div class="color-row">
+          <input type="color" id="specialBgColor" value="#f9b9b6" oninput="syncHex(this, 'specialBgHex')">
+          <input type="text" id="specialBgHex" placeholder="#F9B9B6" maxlength="7" oninput="syncColor(this, 'specialBgColor')">
+        </div>
       </div>
       
       <div class="menu-item">
         <label>🎨 Color botón igual:</label>
-        <input type="color" id="equalBgColor" value="#6b5f00">
+        <div class="color-row">
+          <input type="color" id="equalBgColor" value="#6b5f00" oninput="syncHex(this, 'equalBgHex')">
+          <input type="text" id="equalBgHex" placeholder="#6B5F00" maxlength="7" oninput="syncColor(this, 'equalBgColor')">
+        </div>
       </div>
       
       <div class="menu-item">
         <label>🎨 Color de fondo:</label>
-        <input type="color" id="bgColor" value="#fff8f7">
+        <div class="color-row">
+          <input type="color" id="bgColor" value="#fff8f7" oninput="syncHex(this, 'bgColorHex')">
+          <input type="text" id="bgColorHex" placeholder="#FFF8F7" maxlength="7" oninput="syncColor(this, 'bgColor')">
+        </div>
       </div>
       
       <div class="menu-item">
         <label>🎨 Color de fuente:</label>
-        <input type="color" id="fontColor" value="#000000">
+        <div class="color-row">
+          <input type="color" id="fontColor" value="#000000" oninput="syncHex(this, 'fontColorHex')">
+          <input type="text" id="fontColorHex" placeholder="#000000" maxlength="7" oninput="syncColor(this, 'fontColor')">
+        </div>
       </div>
       
       <div class="menu-item">
@@ -423,9 +456,15 @@
       </div>
       
       <div class="menu-item">
-        <label>📏 Tamaño de fuente: <span class="slider-value" id="fontSizeValue">100%</span></label>
+        <label>📏 Tamaño de fuente (display): <span class="slider-value" id="fontSizeValue">100%</span></label>
         <input type="range" id="fontSize" min="50" max="150" value="100" 
                oninput="document.getElementById('fontSizeValue').textContent = this.value + '%'">
+      </div>
+      
+      <div class="menu-item">
+        <label>📏 Tamaño de fuente (botones): <span class="slider-value" id="btnFontSizeValue">100%</span></label>
+        <input type="range" id="btnFontSize" min="50" max="150" value="100" 
+               oninput="document.getElementById('btnFontSizeValue').textContent = this.value + '%'">
       </div>
       
       <div class="menu-buttons">
@@ -521,20 +560,59 @@
     // ================================================
     // SECRET MENU FUNCTIONS
     // ================================================
+    
+    // Sincronizar color picker con input HEX
+    window.syncHex = function(colorInput, hexInputId) {
+      document.getElementById(hexInputId).value = colorInput.value.toUpperCase();
+    }
+    
+    window.syncColor = function(hexInput, colorInputId) {
+      let hex = hexInput.value.trim();
+      
+      // Agregar # si no lo tiene
+      if (hex && !hex.startsWith('#')) {
+        hex = '#' + hex;
+      }
+      
+      // Validar formato HEX
+      if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+        document.getElementById(colorInputId).value = hex;
+        hexInput.value = hex.toUpperCase();
+      }
+    }
+    
     window.openSecretMenu = function() {
       const menu = document.getElementById('secretMenu');
       
       // Cargar valores actuales en el formulario
       const settings = loadSettings();
+      
+      // Número forzado
       document.getElementById('forcedNumber').value = settings.forcedNumber || '';
+      
+      // Colores con HEX
       document.getElementById('numBgColor').value = settings.numBgColor;
+      document.getElementById('numBgHex').value = settings.numBgColor.toUpperCase();
+      
       document.getElementById('specialBgColor').value = settings.specialBgColor;
+      document.getElementById('specialBgHex').value = settings.specialBgColor.toUpperCase();
+      
       document.getElementById('equalBgColor').value = settings.equalBgColor;
+      document.getElementById('equalBgHex').value = settings.equalBgColor.toUpperCase();
+      
       document.getElementById('bgColor').value = settings.bgColor;
+      document.getElementById('bgColorHex').value = settings.bgColor.toUpperCase();
+      
       document.getElementById('fontColor').value = settings.fontColor;
+      document.getElementById('fontColorHex').value = settings.fontColor.toUpperCase();
+      
+      // Fuente y tamaños
       document.getElementById('fontFamily').value = settings.fontFamily;
       document.getElementById('fontSize').value = settings.fontSizePercent;
       document.getElementById('fontSizeValue').textContent = settings.fontSizePercent + '%';
+      
+      document.getElementById('btnFontSize').value = settings.btnFontSizePercent;
+      document.getElementById('btnFontSizeValue').textContent = settings.btnFontSizePercent + '%';
       
       menu.classList.add('show');
     }
@@ -544,29 +622,34 @@
     }
     
     window.saveSettings = function() {
+      const forcedValue = document.getElementById('forcedNumber').value;
+      
       const settings = {
-        forcedNumber: document.getElementById('forcedNumber').value,
+        forcedNumber: forcedValue,
         numBgColor: document.getElementById('numBgColor').value,
         specialBgColor: document.getElementById('specialBgColor').value,
         equalBgColor: document.getElementById('equalBgColor').value,
         bgColor: document.getElementById('bgColor').value,
         fontColor: document.getElementById('fontColor').value,
         fontFamily: document.getElementById('fontFamily').value,
-        fontSizePercent: document.getElementById('fontSize').value
+        fontSizePercent: document.getElementById('fontSize').value,
+        btnFontSizePercent: document.getElementById('btnFontSize').value
       };
       
       localStorage.setItem('calcSettings', JSON.stringify(settings));
       
-      // Actualizar el número forzado globalmente
-      if (settings.forcedNumber) {
-        window.forced = parseFloat(settings.forcedNumber);
+      // CRÍTICO: Actualizar el número forzado globalmente
+      if (forcedValue && forcedValue.trim() !== '') {
+        window.forced = parseFloat(forcedValue);
+        console.log('✅ Número forzado establecido:', window.forced);
       } else {
         window.forced = null;
+        console.log('❌ Número forzado eliminado');
       }
       
       applySettings(settings);
       closeSecretMenu();
-      alert('✅ Configuración guardada');
+      alert('✅ Configuración guardada correctamente');
     }
     
     window.resetSettings = function() {
@@ -582,7 +665,8 @@
         bgColor: '#fff8f7',
         fontColor: '#000000',
         fontFamily: 'Roboto, sans-serif',
-        fontSizePercent: '100'
+        fontSizePercent: '100',
+        btnFontSizePercent: '100'
       };
       
       applySettings(defaults);
@@ -606,7 +690,8 @@
         bgColor: '#fff8f7',
         fontColor: '#000000',
         fontFamily: 'Roboto, sans-serif',
-        fontSizePercent: '100'
+        fontSizePercent: '100',
+        btnFontSizePercent: '100'
       };
     }
     
@@ -626,13 +711,18 @@
       // Fuente
       root.style.setProperty('--font-family', settings.fontFamily);
       
-      // Tamaño
+      // Tamaño de fuente del display
       const baseFontSize = 13.1;
       const baseResultSize = 6.9;
       const multiplier = settings.fontSizePercent / 100;
       
       root.style.setProperty('--font-size', (baseFontSize * multiplier) + 'vw');
       root.style.setProperty('--result-font-size', (baseResultSize * multiplier) + 'vw');
+      
+      // Tamaño de fuente de los botones
+      const baseBtnSize = 7.1;
+      const btnMultiplier = settings.btnFontSizePercent / 100;
+      root.style.setProperty('--btn-font-size', (baseBtnSize * btnMultiplier) + 'vw');
     }
     
     function adjustBrightness(color, percent) {
@@ -666,9 +756,13 @@
           const settings = loadSettings();
           applySettings(settings);
           
-          // Cargar número forzado si existe
-          if (settings.forcedNumber) {
+          // CRÍTICO: Cargar número forzado si existe
+          if (settings.forcedNumber && settings.forcedNumber.trim() !== '') {
             window.forced = parseFloat(settings.forcedNumber);
+            console.log('✅ Número forzado cargado al inicio:', window.forced);
+          } else {
+            window.forced = null;
+            console.log('ℹ️ No hay número forzado configurado');
           }
           
           // Mostrar banner de instalación si aplica
@@ -692,8 +786,11 @@
           // Cargar configuración guardada
           const settings = loadSettings();
           applySettings(settings);
-          if (settings.forcedNumber) {
+          if (settings.forcedNumber && settings.forcedNumber.trim() !== '') {
             window.forced = parseFloat(settings.forcedNumber);
+            console.log('✅ Número forzado cargado (offline):', window.forced);
+          } else {
+            window.forced = null;
           }
           
         } else {
