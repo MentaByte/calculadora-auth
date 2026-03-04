@@ -3,7 +3,7 @@
    Estrategia: Cache First con fallback a red
    =============================================== */
 
-const CACHE_NAME = 'calculadora-v1.1';
+const CACHE_NAME = 'calculadora-v1.2';
 
 const BASE = self.location.pathname.replace(/sw\.js$/, '');
 
