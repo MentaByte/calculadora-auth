@@ -89,32 +89,18 @@
     <p>Por favor espera mientras validamos tu código.</p>
     <div class="loader"></div>
     <div id="message"></div>
-    <div id="debug" style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 8px; font-size: 11px; text-align: left; font-family: monospace; display: none;"></div>
   </div>
 
   <script>
-    const debugEl = document.getElementById("debug");
     const messageEl = document.getElementById("message");
     
-    // Versión para evitar cache
-    const VERSION = '1.2.2';
-    
-    function addDebug(msg) {
-      console.log(msg);
-      debugEl.style.display = 'block';
-      debugEl.innerHTML += msg + '<br>';
-    }
-    
-    addDebug('✅ Script iniciado v' + VERSION + ' (Safari compatible)');
-
-    // Importar funciones de auth.js directamente
+    // Funciones de autenticación
     const SUPABASE_URL = "https://zgatennqbagmyfbpiakr.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpnYXRlbm5xYmFnbXlmYnBpYWtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMTg3NTEsImV4cCI6MjA4NjU5NDc1MX0.5c_IoL3_PM1zwFsuvblkoCoWbP9-4BSaMcIwSasLprw";
 
     function getDeviceId() {
       let id = localStorage.getItem("device_id");
       if (!id) {
-        // Alternativa compatible con Safari iOS
         id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
           var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
           return v.toString(16);
@@ -142,34 +128,21 @@
       localStorage.setItem("last_known_status", "valid");
     }
 
-    // Iniciar proceso
-    addDebug('🔍 Funciones cargadas');
-
+    // Procesar activación
     const params = new URLSearchParams(window.location.search);
     const code = params.get("k");
-    
-    addDebug('🔑 Código: ' + (code ? code.substring(0, 10) + '...' : 'NINGUNO'));
 
     if (!code) {
-      // No hay código — mostrar error
       document.querySelector('h1').textContent = 'Acceso no válido';
       document.querySelector('p').textContent = 'No se proporcionó un código de activación.';
       document.querySelector('.loader').style.display = 'none';
       document.querySelector('.icon').textContent = '⚠️';
-      addDebug('❌ Sin código en URL');
     } else {
-      addDebug('🌐 Llamando a Supabase...');
-      
       activateLicense(code)
         .then(result => {
-          addDebug('✅ Respuesta recibida: ' + JSON.stringify(result).substring(0, 50));
-
           if (result.session_token) {
             // ✅ Activación exitosa
-            addDebug('💾 Guardando sesión...');
             saveSession(result.session_token);
-            addDebug('✅ Sesión guardada');
-            
             document.querySelector('h1').textContent = '¡Activado!';
             document.querySelector('p').textContent = 'Redirigiendo a la calculadora...';
             document.querySelector('.loader').style.display = 'none';
@@ -178,14 +151,11 @@
             messageEl.className = 'success';
             messageEl.textContent = 'Tu acceso ha sido activado correctamente.';
             
-            addDebug('🔄 Redirigiendo en 2 segundos...');
-            
             setTimeout(() => {
               window.location.replace("./core/");
-            }, 2000);
+            }, 800);
           } else {
             // ❌ Error en la activación
-            addDebug('❌ Error: ' + (result.error || 'desconocido'));
             document.querySelector('.loader').style.display = 'none';
             document.querySelector('.icon').textContent = '❌';
             
@@ -203,10 +173,6 @@
           }
         })
         .catch(error => {
-          // Error de red o servidor
-          addDebug('❌ Error catch: ' + error.message);
-          addDebug('❌ Stack: ' + (error.stack || 'no stack').substring(0, 100));
-          
           document.querySelector('.loader').style.display = 'none';
           document.querySelector('.icon').textContent = '⚠️';
           document.querySelector('h1').textContent = 'Error de conexión';
