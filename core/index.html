@@ -455,7 +455,6 @@
   <div id="loading">
     <div class="spinner"></div>
     <p>Validando acceso...</p>
-    <div id="debugCore" style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 8px; font-size: 11px; text-align: left; font-family: monospace; max-width: 300px; display: none;"></div>
   </div>
 
   <!-- PWA Install Banner -->
@@ -602,22 +601,7 @@
   </div>
 
   <script>
-    const debugCoreEl = document.getElementById("debugCore");
-    
-    // Versión para evitar cache
-    const VERSION = '1.2.2';
-    
-    function addDebugCore(msg) {
-      console.log(msg);
-      debugCoreEl.style.display = 'block';
-      debugCoreEl.innerHTML += msg + '<br>';
-    }
-    
-    addDebugCore('✅ Core: Script iniciado v' + VERSION + ' (Safari compatible)');
-    
-    // ================================================
-    // FUNCIONES DE AUTH (inline para Safari)
-    // ================================================
+    // Funciones de autenticación
     const SUPABASE_URL = "https://zgatennqbagmyfbpiakr.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpnYXRlbm5xYmFnbXlmYnBpYWtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMTg3NTEsImV4cCI6MjA4NjU5NDc1MX0.5c_IoL3_PM1zwFsuvblkoCoWbP9-4BSaMcIwSasLprw";
 
@@ -670,8 +654,6 @@
       localStorage.removeItem("session_token");
       localStorage.removeItem("last_known_status");
     }
-
-    addDebugCore('✅ Funciones de auth cargadas');
 
     // ================================================
     // PWA INSTALLATION
@@ -970,13 +952,8 @@
       const loadingEl = document.getElementById('loading');
       const calculatorEl = document.getElementById('calculatorApp');
 
-      addDebugCore('🔍 Iniciando validación...');
-
       try {
         const result = await validateSession();
-        addDebugCore('✅ Validación completada');
-        addDebugCore('📊 Valid: ' + result.valid);
-        addDebugCore('📊 Error: ' + (result.error || 'ninguno'));
 
         if (result.valid) {
           // ✅ Sesión válida - cargar calculadora
