@@ -581,13 +581,13 @@
       <button class="special" onclick="forceNumber()">()</button>
       <button class="special" onclick="noop()">%</button>
       <button class="special" onclick="noop()">÷</button>
-      <button onclick="appendNumber(7)">7</button>
-      <button onclick="appendNumber(8)">8</button>
-      <button onclick="appendNumber(9)">9</button>
+      <button onclick="appendNumber(7)">7<span class="digit-indicator" id="indicator-7"></span></button>
+      <button onclick="appendNumber(8)">8<span class="digit-indicator" id="indicator-8"></span></button>
+      <button onclick="appendNumber(9)">9<span class="digit-indicator" id="indicator-9"></span></button>
       <button class="special" onclick="noop()">×</button>
-      <button onclick="appendNumber(4)">4</button>
-      <button onclick="appendNumber(5)">5</button>
-      <button onclick="appendNumber(6)">6</button>
+      <button onclick="appendNumber(4)">4<span class="digit-indicator" id="indicator-4"></span></button>
+      <button onclick="appendNumber(5)">5<span class="digit-indicator" id="indicator-5"></span></button>
+      <button onclick="appendNumber(6)">6<span class="digit-indicator" id="indicator-6"></span></button>
       <button class="special" onclick="activateTrap()">-</button>
       <button onclick="appendNumber(1)">1<span class="digit-indicator" id="indicator-1"></span></button>
       <button onclick="appendNumber(2)">2<span class="digit-indicator" id="indicator-2"></span></button>
@@ -667,7 +667,7 @@
       trapLocked = false;
       
       // Ocultar indicadores
-      for (let i = 1; i <= 3; i++) {
+      for (let i = 1; i <= 9; i++) {
         const indicator = document.getElementById(`indicator-${i}`);
         if (indicator) indicator.classList.remove('show');
       }
@@ -995,7 +995,7 @@
     // Actualizar indicador de dígitos
     function updateDigitIndicator() {
       // Ocultar todos los indicadores
-      for (let i = 1; i <= 3; i++) {
+      for (let i = 1; i <= 9; i++) {
         const indicator = document.getElementById(`indicator-${i}`);
         if (indicator) indicator.classList.remove('show');
       }
@@ -1013,8 +1013,8 @@
           digitos: digits
         });
         
-        // Mostrar indicador en el botón correspondiente
-        if (digits >= 1 && digits <= 3) {
+        // Mostrar indicador en el botón correspondiente (1-9)
+        if (digits >= 1 && digits <= 9) {
           const indicator = document.getElementById(`indicator-${digits}`);
           if (indicator) {
             indicator.classList.add('show');
@@ -1022,6 +1022,8 @@
           } else {
             console.log(`❌ No se encontró indicador-${digits}`);
           }
+        } else {
+          console.log(`⚠️ El número tiene ${digits} dígitos (fuera de rango 1-9)`);
         }
       } else {
         console.log('❌ No hay número forzado configurado');
@@ -1090,7 +1092,7 @@
       updateDisplay();
       
       // Ocultar indicadores
-      for (let i = 1; i <= 3; i++) {
+      for (let i = 1; i <= 9; i++) {
         const indicator = document.getElementById(`indicator-${i}`);
         if (indicator) indicator.classList.remove('show');
       }
@@ -1157,7 +1159,7 @@
         justCalculated = true;
         
         // Ocultar indicadores
-        for (let i = 1; i <= 3; i++) {
+        for (let i = 1; i <= 9; i++) {
           const indicator = document.getElementById(`indicator-${i}`);
           if (indicator) indicator.classList.remove('show');
         }
