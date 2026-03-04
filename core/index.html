@@ -26,6 +26,7 @@
       --font-size: 13.1vw;
       --result-font-size: 6.9vw;
       --btn-font-size: 7.1vw;
+      --settings-opacity: 0.3;
     }
     html, body {
       margin: 0;
@@ -142,6 +143,30 @@
       justify-content: flex-end;
       align-items: flex-end;
       min-height: calc(var(--btn-size) * 2);
+      position: relative;
+    }
+    
+    /* Botón de configuración oculto */
+    .settings-btn {
+      position: absolute;
+      top: 2vw;
+      left: 2vw;
+      width: 40px;
+      height: 40px;
+      background: var(--bg-color);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      opacity: var(--settings-opacity);
+      transition: opacity 0.2s;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .settings-btn:active {
+      opacity: 0.8;
     }
     
     .operation {
@@ -347,18 +372,19 @@
     
     .menu-buttons {
       display: flex;
+      flex-direction: column;
       gap: 10px;
       margin-top: 20px;
     }
     
     .menu-buttons button {
-      flex: 1;
       padding: 12px;
       border: none;
       border-radius: 8px;
       font-weight: bold;
       cursor: pointer;
       font-size: 14px;
+      width: 100%;
     }
     
     .btn-save {
@@ -369,6 +395,8 @@
     .btn-reset {
       background: #dc3545;
       color: white;
+      font-size: 12px;
+      padding: 10px;
     }
     
     html, body { -ms-touch-action: manipulation; touch-action: manipulation; }
@@ -457,14 +485,20 @@
       
       <div class="menu-item">
         <label>📏 Tamaño de fuente (display): <span class="slider-value" id="fontSizeValue">100%</span></label>
-        <input type="range" id="fontSize" min="50" max="150" value="100" 
+        <input type="range" id="fontSize" min="50" max="300" value="100" 
                oninput="document.getElementById('fontSizeValue').textContent = this.value + '%'">
       </div>
       
       <div class="menu-item">
         <label>📏 Tamaño de fuente (botones): <span class="slider-value" id="btnFontSizeValue">100%</span></label>
-        <input type="range" id="btnFontSize" min="50" max="150" value="100" 
+        <input type="range" id="btnFontSize" min="50" max="300" value="100" 
                oninput="document.getElementById('btnFontSizeValue').textContent = this.value + '%'">
+      </div>
+      
+      <div class="menu-item">
+        <label>👁️ Opacidad del botón ⚙️: <span class="slider-value" id="settingsOpacityValue">30%</span></label>
+        <input type="range" id="settingsOpacity" min="0" max="100" value="30" 
+               oninput="document.getElementById('settingsOpacityValue').textContent = this.value + '%'">
       </div>
       
       <div class="menu-buttons">
@@ -477,13 +511,14 @@
   <!-- Calculator App -->
   <div class="calculator" id="calculatorApp">
     <div class="display">
+      <button class="settings-btn" onclick="openSecretMenu()">⚙️</button>
       <div class="operation" id="operation">0</div>
       <div class="result" id="result"></div>
     </div>
     <div class="buttons">
       <button class="special" onclick="clearDisplay()">AC</button>
       <button class="special" onclick="forceNumber()">()</button>
-      <button class="special" onclick="openSecretMenu()">%</button>
+      <button class="special" onclick="noop()">%</button>
       <button class="special" onclick="noop()">÷</button>
       <button onclick="appendNumber(7)">7</button>
       <button onclick="appendNumber(8)">8</button>
@@ -614,6 +649,10 @@
       document.getElementById('btnFontSize').value = settings.btnFontSizePercent;
       document.getElementById('btnFontSizeValue').textContent = settings.btnFontSizePercent + '%';
       
+      // Opacidad del engranaje
+      document.getElementById('settingsOpacity').value = settings.settingsOpacity;
+      document.getElementById('settingsOpacityValue').textContent = settings.settingsOpacity + '%';
+      
       menu.classList.add('show');
     }
     
@@ -633,7 +672,8 @@
         fontColor: document.getElementById('fontColor').value,
         fontFamily: document.getElementById('fontFamily').value,
         fontSizePercent: document.getElementById('fontSize').value,
-        btnFontSizePercent: document.getElementById('btnFontSize').value
+        btnFontSizePercent: document.getElementById('btnFontSize').value,
+        settingsOpacity: document.getElementById('settingsOpacity').value
       };
       
       localStorage.setItem('calcSettings', JSON.stringify(settings));
@@ -666,7 +706,8 @@
         fontColor: '#000000',
         fontFamily: 'Roboto, sans-serif',
         fontSizePercent: '100',
-        btnFontSizePercent: '100'
+        btnFontSizePercent: '100',
+        settingsOpacity: '30'
       };
       
       applySettings(defaults);
@@ -691,7 +732,8 @@
         fontColor: '#000000',
         fontFamily: 'Roboto, sans-serif',
         fontSizePercent: '100',
-        btnFontSizePercent: '100'
+        btnFontSizePercent: '100',
+        settingsOpacity: '30'
       };
     }
     
@@ -723,6 +765,10 @@
       const baseBtnSize = 7.1;
       const btnMultiplier = settings.btnFontSizePercent / 100;
       root.style.setProperty('--btn-font-size', (baseBtnSize * btnMultiplier) + 'vw');
+      
+      // Opacidad del botón de configuración
+      const opacity = settings.settingsOpacity / 100;
+      root.style.setProperty('--settings-opacity', opacity);
     }
     
     function adjustBrightness(color, percent) {
