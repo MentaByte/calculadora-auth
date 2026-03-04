@@ -92,9 +92,12 @@
     <div id="debug" style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 8px; font-size: 11px; text-align: left; font-family: monospace; display: none;"></div>
   </div>
 
-  <script type="module">
+  <script>
     const debugEl = document.getElementById("debug");
     const messageEl = document.getElementById("message");
+    
+    // Versión para evitar cache
+    const VERSION = '1.2.1';
     
     function addDebug(msg) {
       console.log(msg);
@@ -102,28 +105,59 @@
       debugEl.innerHTML += msg + '<br>';
     }
     
-    addDebug('✅ Script iniciado');
+    addDebug('✅ Script iniciado v' + VERSION + ' (Safari compatible)');
+
+    // Importar funciones de auth.js directamente
+    const SUPABASE_URL = "https://zgatennqbagmyfbpiakr.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpnYXRlbm5xYmFnbXlmYnBpYWtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMTg3NTEsImV4cCI6MjA4NjU5NDc1MX0.5c_IoL3_PM1zwFsuvblkoCoWbP9-4BSaMcIwSasLprw";
+
+    function getDeviceId() {
+      let id = localStorage.getItem("device_id");
+      if (!id) {
+        id = crypto.randomUUID();
+        localStorage.setItem("device_id", id);
+      }
+      return id;
+    }
+
+    async function activateLicense(code) {
+      const device_id = getDeviceId();
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/activate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ code, device_id }),
+      });
+      return res.json();
+    }
+
+    function saveSession(token) {
+      localStorage.setItem("session_token", token);
+      localStorage.setItem("last_known_status", "valid");
+    }
+
+    // Iniciar proceso
+    addDebug('🔍 Funciones cargadas');
+
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("k");
     
-    try {
-      addDebug('📦 Importando auth.js...');
-      const { activateLicense, saveSession } = await import("./auth.js");
-      addDebug('✅ auth.js importado');
+    addDebug('🔑 Código: ' + (code ? code.substring(0, 10) + '...' : 'NINGUNO'));
 
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get("k");
+    if (!code) {
+      // No hay código — mostrar error
+      document.querySelector('h1').textContent = 'Acceso no válido';
+      document.querySelector('p').textContent = 'No se proporcionó un código de activación.';
+      document.querySelector('.loader').style.display = 'none';
+      document.querySelector('.icon').textContent = '⚠️';
+      addDebug('❌ Sin código en URL');
+    } else {
+      addDebug('🌐 Llamando a Supabase...');
       
-      addDebug('🔑 Código: ' + (code ? code.substring(0, 10) + '...' : 'NINGUNO'));
-
-      if (!code) {
-        // No hay código — mostrar error
-        document.querySelector('h1').textContent = 'Acceso no válido';
-        document.querySelector('p').textContent = 'No se proporcionó un código de activación.';
-        document.querySelector('.loader').style.display = 'none';
-        document.querySelector('.icon').textContent = '⚠️';
-      } else {
-        try {
-          addDebug('🌐 Llamando a Supabase...');
-          const result = await activateLicense(code);
+      activateLicense(code)
+        .then(result => {
           addDebug('✅ Respuesta recibida: ' + JSON.stringify(result).substring(0, 50));
 
           if (result.session_token) {
@@ -141,7 +175,7 @@
             messageEl.textContent = 'Tu acceso ha sido activado correctamente.';
             
             addDebug('🔄 Redirigiendo en 2 segundos...');
-            // Redirigir a la app sin el código en la URL
+            
             setTimeout(() => {
               window.location.replace("./core/");
             }, 2000);
@@ -163,7 +197,8 @@
             messageEl.className = 'error';
             messageEl.textContent = 'No se pudo activar tu acceso. Contacta al administrador.';
           }
-        } catch (error) {
+        })
+        .catch(error => {
           // Error de red o servidor
           addDebug('❌ Error catch: ' + error.message);
           addDebug('❌ Stack: ' + (error.stack || 'no stack').substring(0, 100));
@@ -175,16 +210,7 @@
           
           messageEl.className = 'error';
           messageEl.textContent = 'Error: ' + error.message;
-        }
-      }
-    } catch (importError) {
-      addDebug('❌ Error importando: ' + importError.message);
-      document.querySelector('.loader').style.display = 'none';
-      document.querySelector('.icon').textContent = '⚠️';
-      document.querySelector('h1').textContent = 'Error al cargar';
-      document.querySelector('p').textContent = 'Problema al cargar el módulo de autenticación.';
-      messageEl.className = 'error';
-      messageEl.textContent = 'Error: ' + importError.message;
+        });
     }
   </script>
 </body>
