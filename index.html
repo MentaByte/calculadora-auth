@@ -97,7 +97,7 @@
     const messageEl = document.getElementById("message");
     
     // Versión para evitar cache
-    const VERSION = '1.2.1';
+    const VERSION = '1.2.2';
     
     function addDebug(msg) {
       console.log(msg);
@@ -114,7 +114,11 @@
     function getDeviceId() {
       let id = localStorage.getItem("device_id");
       if (!id) {
-        id = crypto.randomUUID();
+        // Alternativa compatible con Safari iOS
+        id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
         localStorage.setItem("device_id", id);
       }
       return id;
