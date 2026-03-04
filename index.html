@@ -89,67 +89,102 @@
     <p>Por favor espera mientras validamos tu código.</p>
     <div class="loader"></div>
     <div id="message"></div>
+    <div id="debug" style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 8px; font-size: 11px; text-align: left; font-family: monospace; display: none;"></div>
   </div>
 
   <script type="module">
-    import { activateLicense, saveSession } from "./auth.js";
-
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("k");
+    const debugEl = document.getElementById("debug");
     const messageEl = document.getElementById("message");
+    
+    function addDebug(msg) {
+      console.log(msg);
+      debugEl.style.display = 'block';
+      debugEl.innerHTML += msg + '<br>';
+    }
+    
+    addDebug('✅ Script iniciado');
+    
+    try {
+      addDebug('📦 Importando auth.js...');
+      const { activateLicense, saveSession } = await import("./auth.js");
+      addDebug('✅ auth.js importado');
 
-    if (!code) {
-      // No hay código — mostrar error
-      document.querySelector('h1').textContent = 'Acceso no válido';
-      document.querySelector('p').textContent = 'No se proporcionó un código de activación.';
-      document.querySelector('.loader').style.display = 'none';
-      document.querySelector('.icon').textContent = '⚠️';
-    } else {
-      try {
-        const result = await activateLicense(code);
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("k");
+      
+      addDebug('🔑 Código: ' + (code ? code.substring(0, 10) + '...' : 'NINGUNO'));
 
-        if (result.session_token) {
-          // ✅ Activación exitosa
-          saveSession(result.session_token);
-          document.querySelector('h1').textContent = '¡Activado!';
-          document.querySelector('p').textContent = 'Redirigiendo a la calculadora...';
-          document.querySelector('.loader').style.display = 'none';
-          document.querySelector('.icon').textContent = '✅';
-          
-          messageEl.className = 'success';
-          messageEl.textContent = 'Tu acceso ha sido activado correctamente.';
-          
-          // Redirigir a la app sin el código en la URL
-          setTimeout(() => {
-            window.location.replace("./core/");
-          }, 1500);
-        } else {
-          // ❌ Error en la activación
-          document.querySelector('.loader').style.display = 'none';
-          document.querySelector('.icon').textContent = '❌';
-          
-          const mensajes = {
-            invalid_code: "El código no existe o no es válido.",
-            revoked: "Este acceso ha sido revocado.",
-            device_mismatch: "Este código ya está activo en otro dispositivo.",
-          };
-          
-          document.querySelector('h1').textContent = 'Error de activación';
-          document.querySelector('p').textContent = mensajes[result.error] || "Error desconocido.";
-          
-          messageEl.className = 'error';
-          messageEl.textContent = 'No se pudo activar tu acceso. Contacta al administrador.';
-        }
-      } catch (error) {
-        // Error de red o servidor
+      if (!code) {
+        // No hay código — mostrar error
+        document.querySelector('h1').textContent = 'Acceso no válido';
+        document.querySelector('p').textContent = 'No se proporcionó un código de activación.';
         document.querySelector('.loader').style.display = 'none';
         document.querySelector('.icon').textContent = '⚠️';
-        document.querySelector('h1').textContent = 'Error de conexión';
-        document.querySelector('p').textContent = 'No se pudo conectar con el servidor.';
-        
-        messageEl.className = 'error';
-        messageEl.textContent = 'Verifica tu conexión a internet e inténtalo de nuevo.';
+      } else {
+        try {
+          addDebug('🌐 Llamando a Supabase...');
+          const result = await activateLicense(code);
+          addDebug('✅ Respuesta recibida: ' + JSON.stringify(result).substring(0, 50));
+
+          if (result.session_token) {
+            // ✅ Activación exitosa
+            addDebug('💾 Guardando sesión...');
+            saveSession(result.session_token);
+            addDebug('✅ Sesión guardada');
+            
+            document.querySelector('h1').textContent = '¡Activado!';
+            document.querySelector('p').textContent = 'Redirigiendo a la calculadora...';
+            document.querySelector('.loader').style.display = 'none';
+            document.querySelector('.icon').textContent = '✅';
+            
+            messageEl.className = 'success';
+            messageEl.textContent = 'Tu acceso ha sido activado correctamente.';
+            
+            addDebug('🔄 Redirigiendo en 2 segundos...');
+            // Redirigir a la app sin el código en la URL
+            setTimeout(() => {
+              window.location.replace("./core/");
+            }, 2000);
+          } else {
+            // ❌ Error en la activación
+            addDebug('❌ Error: ' + (result.error || 'desconocido'));
+            document.querySelector('.loader').style.display = 'none';
+            document.querySelector('.icon').textContent = '❌';
+            
+            const mensajes = {
+              invalid_code: "El código no existe o no es válido.",
+              revoked: "Este acceso ha sido revocado.",
+              device_mismatch: "Este código ya está activo en otro dispositivo.",
+            };
+            
+            document.querySelector('h1').textContent = 'Error de activación';
+            document.querySelector('p').textContent = mensajes[result.error] || "Error desconocido.";
+            
+            messageEl.className = 'error';
+            messageEl.textContent = 'No se pudo activar tu acceso. Contacta al administrador.';
+          }
+        } catch (error) {
+          // Error de red o servidor
+          addDebug('❌ Error catch: ' + error.message);
+          addDebug('❌ Stack: ' + (error.stack || 'no stack').substring(0, 100));
+          
+          document.querySelector('.loader').style.display = 'none';
+          document.querySelector('.icon').textContent = '⚠️';
+          document.querySelector('h1').textContent = 'Error de conexión';
+          document.querySelector('p').textContent = 'No se pudo conectar con el servidor.';
+          
+          messageEl.className = 'error';
+          messageEl.textContent = 'Error: ' + error.message;
+        }
       }
+    } catch (importError) {
+      addDebug('❌ Error importando: ' + importError.message);
+      document.querySelector('.loader').style.display = 'none';
+      document.querySelector('.icon').textContent = '⚠️';
+      document.querySelector('h1').textContent = 'Error al cargar';
+      document.querySelector('p').textContent = 'Problema al cargar el módulo de autenticación.';
+      messageEl.className = 'error';
+      messageEl.textContent = 'Error: ' + importError.message;
     }
   </script>
 </body>
