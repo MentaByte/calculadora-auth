@@ -27,6 +27,7 @@
       --result-font-size: 6.9vw;
       --btn-font-size: 7.1vw;
       --settings-opacity: 0.3;
+      --indicator-opacity: 0.4;
     }
     html, body {
       margin: 0;
@@ -169,6 +170,22 @@
       opacity: 0.8;
     }
     
+    /* Indicador de dígitos */
+    .digit-indicator {
+      position: absolute;
+      bottom: -8px;
+      width: 4px;
+      height: 4px;
+      background: var(--font-color);
+      border-radius: 50%;
+      opacity: var(--indicator-opacity);
+      display: none;
+    }
+    
+    .digit-indicator.show {
+      display: block;
+    }
+    
     .operation {
       font-size: var(--font-size);
       color: var(--font-color);
@@ -216,6 +233,7 @@
       justify-self: center;
       align-self: center;
       font-family: var(--font-family);
+      position: relative;
     }
     
     button:active {
@@ -370,6 +388,29 @@
       font-size: 16px;
     }
     
+    .clear-operation-btn {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      background: #ff9800;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .clear-operation-btn:hover {
+      background: #f57c00;
+    }
+    
+    .clear-operation-btn:active {
+      background: #ef6c00;
+      transform: scale(0.98);
+    }
+    
     .menu-buttons {
       display: flex;
       flex-direction: column;
@@ -395,8 +436,10 @@
     .btn-reset {
       background: #dc3545;
       color: white;
-      font-size: 12px;
-      padding: 10px;
+      font-size: 11px;
+      padding: 8px;
+      max-width: 120px;
+      align-self: center;
     }
     
     html, body { -ms-touch-action: manipulation; touch-action: manipulation; }
@@ -429,6 +472,7 @@
       <div class="menu-item primary">
         <label>⭐ Número a forzar:</label>
         <input type="number" id="forcedNumber" placeholder="Ingresa número a forzar" step="0.01">
+        <button class="clear-operation-btn" onclick="clearCurrentOperation()">🗑️ Borrar suma actual</button>
       </div>
       
       <div class="menu-item">
@@ -501,6 +545,12 @@
                oninput="document.getElementById('settingsOpacityValue').textContent = this.value + '%'">
       </div>
       
+      <div class="menu-item">
+        <label>👁️ Opacidad del indicador •: <span class="slider-value" id="indicatorOpacityValue">40%</span></label>
+        <input type="range" id="indicatorOpacity" min="0" max="100" value="40" 
+               oninput="document.getElementById('indicatorOpacityValue').textContent = this.value + '%'">
+      </div>
+      
       <div class="menu-buttons">
         <button class="btn-save" onclick="saveSettings()">💾 Guardar</button>
         <button class="btn-reset" onclick="resetSettings()">🔄 Restaurar</button>
@@ -528,9 +578,18 @@
       <button onclick="appendNumber(5)">5</button>
       <button onclick="appendNumber(6)">6</button>
       <button class="special" onclick="activateTrap()">-</button>
-      <button onclick="appendNumber(1)">1</button>
-      <button onclick="appendNumber(2)">2</button>
-      <button onclick="appendNumber(3)">3</button>
+      <button onclick="appendNumber(1)">
+        1
+        <span class="digit-indicator" id="indicator-1"></span>
+      </button>
+      <button onclick="appendNumber(2)">
+        2
+        <span class="digit-indicator" id="indicator-2"></span>
+      </button>
+      <button onclick="appendNumber(3)">
+        3
+        <span class="digit-indicator" id="indicator-3"></span>
+      </button>
       <button class="special" onclick="add()">+</button>
       <button onclick="appendNumber(0)">0</button>
       <button onclick="appendDot()">.</button>
@@ -596,6 +655,35 @@
     // SECRET MENU FUNCTIONS
     // ================================================
     
+    // Limpiar la operación actual pero mantener el número forzado
+    window.clearCurrentOperation = function() {
+      currentOperation = "";
+      result.textContent = "";
+      partialVisible = false;
+      justCalculated = false;
+      trapMode = false;
+      trapLocked = false;
+      
+      // Ocultar indicadores
+      for (let i = 1; i <= 3; i++) {
+        const indicator = document.getElementById(`indicator-${i}`);
+        if (indicator) indicator.classList.remove('show');
+      }
+      
+      updateDisplay();
+      
+      // Mantener el menú abierto y mostrar confirmación
+      const btn = event.target;
+      const originalText = btn.textContent;
+      btn.textContent = '✅ Suma borrada';
+      btn.style.background = '#28a745';
+      
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.background = '#ff9800';
+      }, 1500);
+    }
+    
     // Sincronizar color picker con input HEX
     window.syncHex = function(colorInput, hexInputId) {
       document.getElementById(hexInputId).value = colorInput.value.toUpperCase();
@@ -653,6 +741,10 @@
       document.getElementById('settingsOpacity').value = settings.settingsOpacity;
       document.getElementById('settingsOpacityValue').textContent = settings.settingsOpacity + '%';
       
+      // Opacidad del indicador
+      document.getElementById('indicatorOpacity').value = settings.indicatorOpacity;
+      document.getElementById('indicatorOpacityValue').textContent = settings.indicatorOpacity + '%';
+      
       menu.classList.add('show');
     }
     
@@ -673,7 +765,8 @@
         fontFamily: document.getElementById('fontFamily').value,
         fontSizePercent: document.getElementById('fontSize').value,
         btnFontSizePercent: document.getElementById('btnFontSize').value,
-        settingsOpacity: document.getElementById('settingsOpacity').value
+        settingsOpacity: document.getElementById('settingsOpacity').value,
+        indicatorOpacity: document.getElementById('indicatorOpacity').value
       };
       
       localStorage.setItem('calcSettings', JSON.stringify(settings));
@@ -707,7 +800,8 @@
         fontFamily: 'Roboto, sans-serif',
         fontSizePercent: '100',
         btnFontSizePercent: '100',
-        settingsOpacity: '30'
+        settingsOpacity: '30',
+        indicatorOpacity: '40'
       };
       
       applySettings(defaults);
@@ -733,7 +827,8 @@
         fontFamily: 'Roboto, sans-serif',
         fontSizePercent: '100',
         btnFontSizePercent: '100',
-        settingsOpacity: '30'
+        settingsOpacity: '30',
+        indicatorOpacity: '40'
       };
     }
     
@@ -769,6 +864,10 @@
       // Opacidad del botón de configuración
       const opacity = settings.settingsOpacity / 100;
       root.style.setProperty('--settings-opacity', opacity);
+      
+      // Opacidad del indicador de dígitos
+      const indicatorOpacity = settings.indicatorOpacity / 100;
+      root.style.setProperty('--indicator-opacity', indicatorOpacity);
     }
     
     function adjustBrightness(color, percent) {
@@ -780,6 +879,27 @@
       return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 +
         (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255))
         .toString(16).slice(1);
+    }
+    
+    // Actualizar indicador de dígitos
+    function updateDigitIndicator() {
+      // Ocultar todos los indicadores
+      for (let i = 1; i <= 3; i++) {
+        const indicator = document.getElementById(`indicator-${i}`);
+        if (indicator) indicator.classList.remove('show');
+      }
+      
+      // Si hay un número forzado configurado
+      if (window.forced !== null && window.forced !== undefined) {
+        const needed = window.forced - (eval(currentOperation.replace(/\+$/, "")) || 0);
+        const digits = Math.abs(needed).toString().replace('.', '').length;
+        
+        // Mostrar indicador en el botón correspondiente
+        if (digits >= 1 && digits <= 3) {
+          const indicator = document.getElementById(`indicator-${digits}`);
+          if (indicator) indicator.classList.add('show');
+        }
+      }
     }
 
     // ================================================
@@ -913,6 +1033,11 @@
       }
       justCalculated = false;
       updateDisplay();
+      
+      // Actualizar indicador si estamos en modo trap
+      if (trapMode) {
+        updateDigitIndicator();
+      }
     }
     
     function appendDot() {
@@ -936,6 +1061,12 @@
       partialVisible = false;
       justCalculated = false;
       updateDisplay();
+      
+      // Ocultar indicadores
+      for (let i = 1; i <= 3; i++) {
+        const indicator = document.getElementById(`indicator-${i}`);
+        if (indicator) indicator.classList.remove('show');
+      }
     }
     
     function backspace() {
@@ -963,6 +1094,7 @@
       currentOperation += "+";
       justCalculated = false;
       updateDisplay();
+      updateDigitIndicator();  // Mostrar indicador
     }
     
     function showTrapResult() {
@@ -996,6 +1128,13 @@
         trapLocked = false;
         partialVisible = false;
         justCalculated = true;
+        
+        // Ocultar indicadores
+        for (let i = 1; i <= 3; i++) {
+          const indicator = document.getElementById(`indicator-${i}`);
+          if (indicator) indicator.classList.remove('show');
+        }
+        
         updateDisplay();
       } catch {
         result.textContent = "Error";
