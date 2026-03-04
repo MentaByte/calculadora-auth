@@ -578,7 +578,7 @@
     </div>
     <div class="buttons">
       <button class="special" onclick="clearDisplay()">AC</button>
-      <button class="special" onclick="forceNumber()">()</button>
+      <button class="special" onclick="noop()">()</button>
       <button class="special" onclick="noop()">%</button>
       <button class="special" onclick="noop()">÷</button>
       <button onclick="appendNumber(7)">7<span class="digit-indicator" id="indicator-7"></span></button>
@@ -1085,6 +1085,12 @@
     
     function clearDisplay() {
       if (trapLocked) return;
+      
+      // Si está en modo trap (después de presionar -), no limpiar
+      if (trapMode) {
+        return;
+      }
+      
       currentOperation = "";
       result.textContent = "";
       partialVisible = false;
@@ -1112,9 +1118,9 @@
       updateDisplay();
     }
     
+    // Función no utilizada (el menú se abre solo con el engranaje)
     function forceNumber() {
-      // Abrir el menú secreto directamente para configurar el número forzado
-      openSecretMenu();
+      // Vacía - ya no se usa
     }
     
     function activateTrap() {
