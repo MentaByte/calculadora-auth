@@ -28,6 +28,7 @@
       --btn-font-size: 7.1vw;
       --settings-opacity: 0.3;
       --indicator-opacity: 0.4;
+      --indicator-size: 8px;
     }
     html, body {
       margin: 0;
@@ -173,16 +174,17 @@
     /* Indicador de dígitos */
     .digit-indicator {
       position: absolute;
-      bottom: 6px;
+      bottom: 8px;
       left: 50%;
       transform: translateX(-50%);
-      width: 5px;
-      height: 5px;
+      width: var(--indicator-size);
+      height: var(--indicator-size);
       background: var(--font-color);
       border-radius: 50%;
       opacity: var(--indicator-opacity);
       display: none;
       pointer-events: none;
+      box-shadow: 0 0 2px rgba(0,0,0,0.3);
     }
     
     .digit-indicator.show {
@@ -554,6 +556,12 @@
                oninput="document.getElementById('indicatorOpacityValue').textContent = this.value + '%'">
       </div>
       
+      <div class="menu-item">
+        <label>📏 Tamaño del indicador •: <span class="slider-value" id="indicatorSizeValue">8px</span></label>
+        <input type="range" id="indicatorSize" min="4" max="16" value="8" 
+               oninput="document.getElementById('indicatorSizeValue').textContent = this.value + 'px'">
+      </div>
+      
       <div class="menu-buttons">
         <button class="btn-save" onclick="saveSettings()">💾 Guardar</button>
         <button class="btn-reset" onclick="resetSettings()">🔄 Restaurar</button>
@@ -739,6 +747,10 @@
       document.getElementById('indicatorOpacity').value = settings.indicatorOpacity;
       document.getElementById('indicatorOpacityValue').textContent = settings.indicatorOpacity + '%';
       
+      // Tamaño del indicador
+      document.getElementById('indicatorSize').value = settings.indicatorSize;
+      document.getElementById('indicatorSizeValue').textContent = settings.indicatorSize + 'px';
+      
       menu.classList.add('show');
     }
     
@@ -760,7 +772,8 @@
         fontSizePercent: document.getElementById('fontSize').value,
         btnFontSizePercent: document.getElementById('btnFontSize').value,
         settingsOpacity: document.getElementById('settingsOpacity').value,
-        indicatorOpacity: document.getElementById('indicatorOpacity').value
+        indicatorOpacity: document.getElementById('indicatorOpacity').value,
+        indicatorSize: document.getElementById('indicatorSize').value
       };
       
       localStorage.setItem('calcSettings', JSON.stringify(settings));
@@ -795,7 +808,8 @@
         fontSizePercent: '100',
         btnFontSizePercent: '100',
         settingsOpacity: '30',
-        indicatorOpacity: '40'
+        indicatorOpacity: '40',
+        indicatorSize: '8'
       };
       
       applySettings(defaults);
@@ -822,7 +836,8 @@
         fontSizePercent: '100',
         btnFontSizePercent: '100',
         settingsOpacity: '30',
-        indicatorOpacity: '40'
+        indicatorOpacity: '40',
+        indicatorSize: '8'
       };
     }
     
@@ -862,6 +877,9 @@
       // Opacidad del indicador de dígitos
       const indicatorOpacity = settings.indicatorOpacity / 100;
       root.style.setProperty('--indicator-opacity', indicatorOpacity);
+      
+      // Tamaño del indicador
+      root.style.setProperty('--indicator-size', settings.indicatorSize + 'px');
     }
     
     function adjustBrightness(color, percent) {
@@ -885,14 +903,29 @@
       
       // Si hay un número forzado configurado
       if (window.forced !== null && window.forced !== undefined) {
-        const needed = window.forced - (eval(currentOperation.replace(/\+$/, "")) || 0);
+        const currentValue = eval(currentOperation.replace(/\+$/, "")) || 0;
+        const needed = window.forced - currentValue;
         const digits = Math.abs(needed).toString().replace('.', '').length;
+        
+        console.log('🎯 Indicador Debug:', {
+          forzado: window.forced,
+          actual: currentValue,
+          necesita: needed,
+          digitos: digits
+        });
         
         // Mostrar indicador en el botón correspondiente
         if (digits >= 1 && digits <= 3) {
           const indicator = document.getElementById(`indicator-${digits}`);
-          if (indicator) indicator.classList.add('show');
+          if (indicator) {
+            indicator.classList.add('show');
+            console.log(`✅ Mostrando indicador en botón ${digits}`);
+          } else {
+            console.log(`❌ No se encontró indicador-${digits}`);
+          }
         }
+      } else {
+        console.log('❌ No hay número forzado configurado');
       }
     }
 
