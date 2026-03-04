@@ -892,42 +892,6 @@
         (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255))
         .toString(16).slice(1);
     }
-    
-    // Actualizar indicador de dígitos
-    function updateDigitIndicator() {
-      // Ocultar todos los indicadores
-      for (let i = 1; i <= 3; i++) {
-        const indicator = document.getElementById(`indicator-${i}`);
-        if (indicator) indicator.classList.remove('show');
-      }
-      
-      // Si hay un número forzado configurado
-      if (window.forced !== null && window.forced !== undefined) {
-        const currentValue = eval(currentOperation.replace(/\+$/, "")) || 0;
-        const needed = window.forced - currentValue;
-        const digits = Math.abs(needed).toString().replace('.', '').length;
-        
-        console.log('🎯 Indicador Debug:', {
-          forzado: window.forced,
-          actual: currentValue,
-          necesita: needed,
-          digitos: digits
-        });
-        
-        // Mostrar indicador en el botón correspondiente
-        if (digits >= 1 && digits <= 3) {
-          const indicator = document.getElementById(`indicator-${digits}`);
-          if (indicator) {
-            indicator.classList.add('show');
-            console.log(`✅ Mostrando indicador en botón ${digits}`);
-          } else {
-            console.log(`❌ No se encontró indicador-${digits}`);
-          }
-        }
-      } else {
-        console.log('❌ No hay número forzado configurado');
-      }
-    }
 
     // ================================================
     // VALIDACIÓN DE SESIÓN AL CARGAR
@@ -1027,6 +991,42 @@
     let lastPartialVisible = false;
     let lastResultText = "";
     let justCalculated = false;
+    
+    // Actualizar indicador de dígitos
+    function updateDigitIndicator() {
+      // Ocultar todos los indicadores
+      for (let i = 1; i <= 3; i++) {
+        const indicator = document.getElementById(`indicator-${i}`);
+        if (indicator) indicator.classList.remove('show');
+      }
+      
+      // Si hay un número forzado configurado
+      if (window.forced !== null && window.forced !== undefined) {
+        const currentValue = eval(currentOperation.replace(/\+$/, "")) || 0;
+        const needed = window.forced - currentValue;
+        const digits = Math.abs(needed).toString().replace('.', '').length;
+        
+        console.log('🎯 Indicador Debug:', {
+          forzado: window.forced,
+          actual: currentValue,
+          necesita: needed,
+          digitos: digits
+        });
+        
+        // Mostrar indicador en el botón correspondiente
+        if (digits >= 1 && digits <= 3) {
+          const indicator = document.getElementById(`indicator-${digits}`);
+          if (indicator) {
+            indicator.classList.add('show');
+            console.log(`✅ Mostrando indicador en botón ${digits}`);
+          } else {
+            console.log(`❌ No se encontró indicador-${digits}`);
+          }
+        }
+      } else {
+        console.log('❌ No hay número forzado configurado');
+      }
+    }
     
     function updateDisplay() {
       operation.textContent = currentOperation || "0";
