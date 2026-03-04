@@ -455,6 +455,7 @@
   <div id="loading">
     <div class="spinner"></div>
     <p>Validando acceso...</p>
+    <div id="debugCore" style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 8px; font-size: 11px; text-align: left; font-family: monospace; max-width: 300px; display: none;"></div>
   </div>
 
   <!-- PWA Install Banner -->
@@ -601,11 +602,26 @@
   </div>
 
   <script type="module">
-    import { validateSession, clearSession } from "../auth.js";
+    const debugCoreEl = document.getElementById("debugCore");
+    
+    function addDebugCore(msg) {
+      console.log(msg);
+      debugCoreEl.style.display = 'block';
+      debugCoreEl.innerHTML += msg + '<br>';
+    }
+    
+    addDebugCore('✅ Core: Script iniciado');
+    
+    try {
+      addDebugCore('📦 Importando auth.js...');
+      const { validateSession, clearSession } = await import("../auth.js");
+      addDebugCore('✅ auth.js importado');
 
-    // ================================================
-    // PWA INSTALLATION
-    // ================================================
+      console.log('🔍 Safari Debug [Core]: Módulo cargado');
+
+      // ================================================
+      // PWA INSTALLATION
+      // ================================================
     let deferredPrompt;
     
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -900,8 +916,13 @@
       const loadingEl = document.getElementById('loading');
       const calculatorEl = document.getElementById('calculatorApp');
 
+      addDebugCore('🔍 Iniciando validación...');
+
       try {
         const result = await validateSession();
+        addDebugCore('✅ Validación completada');
+        addDebugCore('📊 Valid: ' + result.valid);
+        addDebugCore('📊 Error: ' + (result.error || 'ninguno'));
 
         if (result.valid) {
           // ✅ Sesión válida - cargar calculadora
@@ -976,6 +997,12 @@
     // INICIAR APP
     // ================================================
     initApp();
+    
+    } catch (importError) {
+      addDebugCore('❌ Error importando: ' + importError.message);
+      addDebugCore('Stack: ' + (importError.stack || 'no stack').substring(0, 200));
+      document.getElementById('loading').innerHTML = '<p style="color: red;">Error al cargar módulos: ' + importError.message + '</p>';
+    }
   </script>
 
   <!-- Calculator Logic -->
