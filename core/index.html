@@ -173,13 +173,16 @@
     /* Indicador de dígitos */
     .digit-indicator {
       position: absolute;
-      bottom: -8px;
-      width: 4px;
-      height: 4px;
+      bottom: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 5px;
+      height: 5px;
       background: var(--font-color);
       border-radius: 50%;
       opacity: var(--indicator-opacity);
       display: none;
+      pointer-events: none;
     }
     
     .digit-indicator.show {
@@ -578,18 +581,9 @@
       <button onclick="appendNumber(5)">5</button>
       <button onclick="appendNumber(6)">6</button>
       <button class="special" onclick="activateTrap()">-</button>
-      <button onclick="appendNumber(1)">
-        1
-        <span class="digit-indicator" id="indicator-1"></span>
-      </button>
-      <button onclick="appendNumber(2)">
-        2
-        <span class="digit-indicator" id="indicator-2"></span>
-      </button>
-      <button onclick="appendNumber(3)">
-        3
-        <span class="digit-indicator" id="indicator-3"></span>
-      </button>
+      <button onclick="appendNumber(1)">1<span class="digit-indicator" id="indicator-1"></span></button>
+      <button onclick="appendNumber(2)">2<span class="digit-indicator" id="indicator-2"></span></button>
+      <button onclick="appendNumber(3)">3<span class="digit-indicator" id="indicator-3"></span></button>
       <button class="special" onclick="add()">+</button>
       <button onclick="appendNumber(0)">0</button>
       <button onclick="appendDot()">.</button>
