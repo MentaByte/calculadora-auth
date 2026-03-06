@@ -289,9 +289,10 @@
               iosBanner.classList.add('show');
             }
 
-            // Redirigir a la calculadora
-            // Usamos href directo — más confiable en iOS que replace()
-            const targetUrl = './core/';
+            // Redirigir a la calculadora con token en URL como respaldo
+            // Si localStorage falla en el momento de la redirección, el token
+            // llega seguro vía ?t= y se guarda al cargar /core/
+            const targetUrl = './core/?t=' + encodeURIComponent(result.session_token);
             if (isIOS()) {
               // En iOS, pequeño delay para que el usuario vea el mensaje de éxito
               // y luego redirigir de forma segura
