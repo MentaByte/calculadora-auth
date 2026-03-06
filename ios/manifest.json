@@ -1,0 +1,32 @@
+{
+  "name": "Calculadora",
+  "short_name": "Calculadora",
+  "description": "Calculadora con validación de acceso — versión iOS",
+  "start_url": "./core/",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "../ios-icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../ios-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "../ios-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

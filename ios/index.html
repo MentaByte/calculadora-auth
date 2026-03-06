@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Activación - Calculadora</title>
+
+  <!-- iOS PWA meta tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Calculadora">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#1c1c1e">
+
+  <!-- Iconos iOS -->
+  <link rel="apple-touch-icon" href="../ios-icon-180.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="../ios-icon-192.png">
+
+  <!-- Manifest iOS -->
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+      background: #1c1c1e;
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      padding-top: max(20px, env(safe-area-inset-top));
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+
+    .container {
+      background: #2c2c2e;
+      border-radius: 20px;
+      padding: 40px 32px;
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .icon {
+      font-size: 64px;
+      margin-bottom: 24px;
+      display: block;
+      line-height: 1;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 10px;
+      letter-spacing: -0.3px;
+    }
+
+    p {
+      color: #8e8e93;
+      font-size: 15px;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
+    .loader {
+      border: 3px solid #3a3a3c;
+      border-top: 3px solid #ff9500;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 0.8s linear infinite;
+      margin: 16px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .message {
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-top: 16px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .message.error {
+      background: rgba(255, 69, 58, 0.15);
+      border: 1px solid rgba(255, 69, 58, 0.3);
+      color: #ff453a;
+    }
+
+    .message.success {
+      background: rgba(48, 209, 88, 0.15);
+      border: 1px solid rgba(48, 209, 88, 0.3);
+      color: #30d158;
+    }
+
+    /* Banner de instalación iOS */
+    #iosBanner {
+      display: none;
+      background: #3a3a3c;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    #iosBanner.show {
+      display: block;
+    }
+
+    #iosBanner p {
+      color: #ebebf5cc;
+      font-size: 13px;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    #iosBanner .banner-title {
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .share-icon {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      vertical-align: middle;
+      margin: 0 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <span class="icon">🔐</span>
+    <h1 id="title">Activando acceso...</h1>
+    <p id="subtitle">Por favor espera mientras validamos tu código.</p>
+    <div class="loader" id="loader"></div>
+    <div id="message"></div>
+    <div id="iosBanner">
+      <span class="banner-title">📲 Instalar en tu iPhone</span>
+      <p>
+        Toca
+        <svg class="share-icon" viewBox="0 0 24 24" fill="none" stroke="#0a84ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 6H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-2"/>
+          <polyline points="15 3 12 0 9 3"/>
+          <line x1="12" y1="0" x2="12" y2="13"/>
+        </svg>
+        en Safari y luego <strong style="color:#fff">"Añadir a pantalla de inicio"</strong> para instalar la app.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // ================================================
+    // UTILIDADES iOS-SAFE
+    // ================================================
+
+    function safeLocalStorage(action, key, value) {
+      try {
+        if (action === 'get') return localStorage.getItem(key);
+        if (action === 'set') { localStorage.setItem(key, value); return true; }
+        if (action === 'remove') { localStorage.removeItem(key); return true; }
+      } catch (e) {
+        // localStorage no disponible (modo privado iOS)
+        console.warn('[iOS] localStorage no disponible:', e.message);
+        return null;
+      }
+    }
+
+    function isIOS() {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    }
+
+    function isInStandalone() {
+      return ('standalone' in window.navigator && window.navigator.standalone) ||
+             window.matchMedia('(display-mode: standalone)').matches;
+    }
+
+    function isIOSSafari() {
+      return isIOS() &&
+             /Safari/.test(navigator.userAgent) &&
+             !/CriOS|FxiOS|OPiOS|mercury/.test(navigator.userAgent);
+    }
+
+    // ================================================
+    // CONFIGURACIÓN SUPABASE
+    // ================================================
+    const SUPABASE_URL = "https://zgatennqbagmyfbpiakr.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpnYXRlbm5xYmFnbXlmYnBpYWtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMTg3NTEsImV4cCI6MjA4NjU5NDc1MX0.5c_IoL3_PM1zwFsuvblkoCoWbP9-4BSaMcIwSasLprw";
+
+    function getDeviceId() {
+      let id = safeLocalStorage('get', 'device_id');
+      if (!id) {
+        id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
+        safeLocalStorage('set', 'device_id', id);
+      }
+      return id || ('fallback-' + Date.now());
+    }
+
+    async function activateLicense(code) {
+      const device_id = getDeviceId();
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/activate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ code, device_id }),
+      });
+      return res.json();
+    }
+
+    function saveSession(token) {
+      safeLocalStorage('set', 'session_token', token);
+      safeLocalStorage('set', 'last_known_status', 'valid');
+    }
+
+    // ================================================
+    // UI HELPERS
+    // ================================================
+    const titleEl    = document.getElementById('title');
+    const subtitleEl = document.getElementById('subtitle');
+    const loaderEl   = document.getElementById('loader');
+    const messageEl  = document.getElementById('message');
+    const iosBanner  = document.getElementById('iosBanner');
+
+    function showError(title, subtitle, detail) {
+      loaderEl.style.display = 'none';
+      document.querySelector('.icon').textContent = '❌';
+      titleEl.textContent = title;
+      subtitleEl.textContent = subtitle;
+      messageEl.className = 'message error';
+      messageEl.textContent = detail;
+    }
+
+    function showSuccess(title, subtitle, detail) {
+      loaderEl.style.display = 'none';
+      document.querySelector('.icon').textContent = '✅';
+      titleEl.textContent = title;
+      subtitleEl.textContent = subtitle;
+      messageEl.className = 'message success';
+      messageEl.textContent = detail;
+    }
+
+    // ================================================
+    // FLUJO DE ACTIVACIÓN
+    // ================================================
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("k");
+
+    if (!code) {
+      loaderEl.style.display = 'none';
+      document.querySelector('.icon').textContent = '⚠️';
+      titleEl.textContent = 'Código no válido';
+      subtitleEl.textContent = 'No se proporcionó un código de activación.';
+    } else {
+      activateLicense(code)
+        .then(result => {
+          if (result.session_token) {
+            saveSession(result.session_token);
+
+            showSuccess(
+              '¡Activado!',
+              'Tu acceso está listo.',
+              '✓ Acceso activado correctamente'
+            );
+
+            // En iOS: mostrar instrucciones de instalación si no está en standalone
+            if (isIOS() && !isInStandalone()) {
+              iosBanner.classList.add('show');
+            }
+
+            // Redirigir a la calculadora
+            // Usamos href directo — más confiable en iOS que replace()
+            const targetUrl = './core/';
+            if (isIOS()) {
+              // En iOS, pequeño delay para que el usuario vea el mensaje de éxito
+              // y luego redirigir de forma segura
+              setTimeout(() => {
+                window.location.href = targetUrl;
+              }, 1200);
+            } else {
+              setTimeout(() => {
+                window.location.replace(targetUrl);
+              }, 800);
+            }
+
+          } else {
+            const mensajes = {
+              invalid_code: "El código no existe o ya no es válido.",
+              revoked: "Este acceso ha sido revocado por el administrador.",
+              device_mismatch: "Este código ya está activado en otro dispositivo.",
+            };
+            showError(
+              'Error de activación',
+              mensajes[result.error] || "Ocurrió un error desconocido.",
+              'No se pudo activar. Contacta al administrador.'
+            );
+          }
+        })
+        .catch(err => {
+          showError(
+            'Sin conexión',
+            'No se pudo conectar con el servidor. Verifica tu internet e intenta de nuevo.',
+            'Error: ' + err.message
+          );
+        });
+    }
+
+    // ================================================
+    // SERVICE WORKER (iOS Safari sí lo soporta desde iOS 11.3)
+    // ================================================
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js')
+        .then(() => console.log('[iOS SW] Registrado'))
+        .catch(e => console.warn('[iOS SW] Error:', e));
+    }
+  </script>
+</body>
+</html>

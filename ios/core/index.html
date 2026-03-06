@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1c1c1e">
+  <title>Calculadora</title>
+
+  <!-- iOS PWA meta tags (CRÍTICOS para que funcione como app) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Calculadora">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <!-- Iconos -->
+  <link rel="apple-touch-icon" href="../../ios-icon-180.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="../../ios-icon-192.png">
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="../manifest.json">
+
+  <style>
+    :root {
+      --btn-size: 23.8vw;
+      --gap: 1.1vw;
+      /* Colores estilo iOS Calculator */
+      --num-bg: #333333;
+      --num-active: #555555;
+      --special-bg: #636366;
+      --special-active: #7c7c80;
+      --equal-bg: #ff9500;
+      --equal-active: #ffb340;
+      --bg-color: #000000;
+      --font-color: #ffffff;
+      --result-color: #ff9500;
+      --font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+      --font-size: 13.1vw;
+      --result-font-size: 6.9vw;
+      --btn-font-size: 7.1vw;
+      --settings-opacity: 0.3;
+      --indicator-opacity: 0.6;
+      --indicator-size: 8px;
+      /* Safe areas iOS */
+      --safe-top: env(safe-area-inset-top);
+      --safe-bottom: env(safe-area-inset-bottom);
+    }
+
+    html {
+      height: -webkit-fill-available;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-family);
+      background: var(--bg-color);
+      -webkit-user-select: none;
+      user-select: none;
+      overflow: hidden;
+      height: 100%;
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+    }
+
+    /* Loading Screen */
+    #loading {
+      position: fixed;
+      inset: 0;
+      background: #000000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding-top: var(--safe-top);
+    }
+
+    #loading.hidden {
+      display: none;
+    }
+
+    .spinner {
+      border: 3px solid #3a3a3c;
+      border-top: 3px solid #ff9500;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    #loading p {
+      color: #8e8e93;
+      font-size: 15px;
+      font-weight: 400;
+    }
+
+    /* Banner "Añadir a pantalla de inicio" para iOS Safari */
+    #iosBanner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #1c1c1e;
+      color: #ffffff;
+      padding: 16px 20px;
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+      display: none;
+      flex-direction: column;
+      z-index: 1000;
+      box-shadow: 0 -1px 0 rgba(255,255,255,0.1);
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    #iosBanner.show {
+      display: flex;
+    }
+
+    #iosBanner .banner-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    #iosBanner .banner-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    #iosBanner .banner-close {
+      background: #3a3a3c;
+      border: none;
+      color: #8e8e93;
+      width: 24px;
+      height: 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      aspect-ratio: 1;
+      border-radius: 50%;
+    }
+
+    #iosBanner .banner-text {
+      font-size: 13px;
+      color: #8e8e93;
+      line-height: 1.5;
+    }
+
+    #iosBanner .banner-text strong {
+      color: #ffffff;
+    }
+
+    .share-icon-inline {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      vertical-align: middle;
+      margin: 0 1px;
+      position: relative;
+      top: -1px;
+    }
+
+    /* Calculator layout */
+    .calculator {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+      height: -webkit-fill-available;
+    }
+
+    .calculator.visible {
+      display: flex;
+    }
+
+    .display {
+      flex: 1;
+      width: 100%;
+      padding: 2vw 4vw;
+      padding-top: max(2vw, var(--safe-top));
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-end;
+      position: relative;
+    }
+
+    .settings-btn {
+      position: absolute;
+      top: max(2vw, var(--safe-top));
+      left: 2vw;
+      width: 40px;
+      height: 40px;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      opacity: var(--settings-opacity);
+      transition: opacity 0.2s;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .settings-btn:active {
+      opacity: 0.8;
+    }
+
+    .digit-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: var(--indicator-size);
+      height: var(--indicator-size);
+      background: var(--font-color);
+      border-radius: 50%;
+      opacity: var(--indicator-opacity);
+      display: none;
+      pointer-events: none;
+    }
+
+    .digit-indicator.show {
+      display: block;
+    }
+
+    .operation {
+      font-size: var(--font-size);
+      color: var(--font-color);
+      word-wrap: break-word;
+      text-align: right;
+      line-height: 1;
+      font-weight: 300;
+      letter-spacing: -1px;
+    }
+
+    .result {
+      font-size: var(--result-font-size);
+      color: var(--result-color);
+      margin-top: 1vw;
+      line-height: 1;
+      font-weight: 400;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-auto-rows: var(--btn-size);
+      gap: var(--gap);
+      padding: var(--gap);
+      padding-bottom: max(var(--gap), env(safe-area-inset-bottom));
+      background: var(--bg-color);
+      box-sizing: border-box;
+    }
+
+    button {
+      border: none;
+      border-radius: 50%;
+      font-size: var(--btn-font-size);
+      font-weight: 400;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: var(--num-bg);
+      color: var(--font-color);
+      cursor: pointer;
+      transition: opacity 0.08s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+      box-sizing: border-box;
+      justify-self: center;
+      align-self: center;
+      font-family: var(--font-family);
+      position: relative;
+    }
+
+    button:active {
+      opacity: 0.6;
+    }
+
+    button.special {
+      background: var(--special-bg);
+    }
+
+    .equal {
+      background: var(--equal-bg);
+      color: #ffffff;
+    }
+
+    /* Secret Menu */
+    #secretMenu {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 2000;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    #secretMenu.show {
+      display: flex;
+    }
+
+    .menu-content {
+      background: #1c1c1e;
+      border-radius: 20px 20px 0 0;
+      padding: 20px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .menu-handle {
+      width: 36px;
+      height: 4px;
+      background: #636366;
+      border-radius: 2px;
+      margin: 0 auto 20px;
+    }
+
+    .menu-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #3a3a3c;
+    }
+
+    .menu-header h2 {
+      margin: 0;
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .menu-close {
+      background: #3a3a3c;
+      color: #8e8e93;
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 14px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      aspect-ratio: 1;
+    }
+
+    .menu-item {
+      margin-bottom: 18px;
+    }
+
+    .menu-item label {
+      display: block;
+      margin-bottom: 8px;
+      color: #ebebf5cc;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .menu-item input[type="text"],
+    .menu-item input[type="number"],
+    .menu-item input[type="range"],
+    .menu-item select {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: #2c2c2e;
+      color: #ffffff;
+      font-size: 15px;
+      box-sizing: border-box;
+      font-family: var(--font-family);
+      -webkit-appearance: none;
+    }
+
+    .menu-item input[type="color"] {
+      height: 44px;
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      width: 60px;
+      padding: 4px;
+      background: #2c2c2e;
+    }
+
+    .color-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .color-row input[type="text"] {
+      flex: 1;
+      text-transform: uppercase;
+      font-family: 'SF Mono', 'Courier New', monospace;
+    }
+
+    .menu-item input[type="range"] {
+      padding: 8px 0;
+      background: transparent;
+      accent-color: #ff9500;
+    }
+
+    .slider-value {
+      display: inline-block;
+      margin-left: 8px;
+      color: #ff9500;
+      font-weight: 600;
+    }
+
+    .menu-item.primary {
+      background: rgba(255, 149, 0, 0.1);
+      border: 1px solid rgba(255, 149, 0, 0.3);
+      padding: 14px;
+      border-radius: 12px;
+    }
+
+    .menu-item.primary label {
+      color: #ff9500;
+      font-size: 15px;
+    }
+
+    .clear-operation-btn {
+      width: 100%;
+      margin-top: 10px;
+      padding: 12px;
+      background: #3a3a3c;
+      color: #ebebf5cc;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .clear-operation-btn:active {
+      opacity: 0.7;
+    }
+
+    .menu-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 20px;
+      padding-bottom: 8px;
+    }
+
+    .menu-buttons button {
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 15px;
+      width: 100%;
+      font-family: var(--font-family);
+      aspect-ratio: unset;
+    }
+
+    .btn-save {
+      background: #30d158;
+      color: #000000;
+    }
+
+    .btn-reset {
+      background: #3a3a3c;
+      color: #ff453a;
+      font-size: 13px;
+      padding: 10px;
+      max-width: 140px;
+      align-self: center;
+    }
+
+    select option {
+      background: #1c1c1e;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading Screen -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Validando acceso...</p>
+  </div>
+
+  <!-- Banner iOS "Añadir a pantalla de inicio" -->
+  <div id="iosBanner">
+    <div class="banner-header">
+      <span class="banner-title">📲 Instalar como app</span>
+      <button class="banner-close" onclick="closeiOSBanner()">×</button>
+    </div>
+    <div class="banner-text">
+      Toca
+      <svg class="share-icon-inline" viewBox="0 0 24 24" fill="none" stroke="#0a84ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 6H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-2"/>
+        <polyline points="15 3 12 0 9 3"/>
+        <line x1="12" y1="0" x2="12" y2="13"/>
+      </svg>
+      en la barra de Safari y luego <strong>"Añadir a pantalla de inicio"</strong> para usar como app.
+    </div>
+  </div>
+
+  <!-- Secret Menu -->
+  <div id="secretMenu">
+    <div class="menu-content">
+      <div class="menu-handle"></div>
+      <div class="menu-header">
+        <h2>⚙️ Configuración</h2>
+        <button class="menu-close" onclick="closeSecretMenu()">×</button>
+      </div>
+
+      <div class="menu-item primary">
+        <label>⭐ Número a forzar:</label>
+        <input type="number" id="forcedNumber" placeholder="Ingresa número a forzar" step="0.01" inputmode="decimal">
+        <button class="clear-operation-btn" onclick="clearCurrentOperation()">🗑️ Borrar suma actual</button>
+      </div>
+
+      <div class="menu-item">
+        <label>🎨 Color botones numéricos:</label>
+        <div class="color-row">
+          <input type="color" id="numBgColor" value="#333333" oninput="syncHex(this,'numBgHex')">
+          <input type="text" id="numBgHex" placeholder="#333333" maxlength="7" oninput="syncColor(this,'numBgColor')">
+        </div>
+      </div>
+
+      <div class="menu-item">
+        <label>🎨 Color botones de signos:</label>
+        <div class="color-row">
+          <input type="color" id="specialBgColor" value="#636366" oninput="syncHex(this,'specialBgHex')">
+          <input type="text" id="specialBgHex" placeholder="#636366" maxlength="7" oninput="syncColor(this,'specialBgColor')">
+        </div>
+      </div>
+
+      <div class="menu-item">
+        <label>🎨 Color botón igual:</label>
+        <div class="color-row">
+          <input type="color" id="equalBgColor" value="#ff9500" oninput="syncHex(this,'equalBgHex')">
+          <input type="text" id="equalBgHex" placeholder="#FF9500" maxlength="7" oninput="syncColor(this,'equalBgColor')">
+        </div>
+      </div>
+
+      <div class="menu-item">
+        <label>🎨 Color de fondo:</label>
+        <div class="color-row">
+          <input type="color" id="bgColor" value="#000000" oninput="syncHex(this,'bgColorHex')">
+          <input type="text" id="bgColorHex" placeholder="#000000" maxlength="7" oninput="syncColor(this,'bgColor')">
+        </div>
+      </div>
+
+      <div class="menu-item">
+        <label>🎨 Color de fuente:</label>
+        <div class="color-row">
+          <input type="color" id="fontColor" value="#ffffff" oninput="syncHex(this,'fontColorHex')">
+          <input type="text" id="fontColorHex" placeholder="#FFFFFF" maxlength="7" oninput="syncColor(this,'fontColor')">
+        </div>
+      </div>
+
+      <div class="menu-item">
+        <label>🔤 Fuente:</label>
+        <select id="fontFamily">
+          <option value="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif">SF Pro (iOS)</option>
+          <option value="Roboto, sans-serif">Roboto</option>
+          <option value="Arial, sans-serif">Arial</option>
+          <option value="'Courier New', monospace">Courier</option>
+          <option value="Georgia, serif">Georgia</option>
+        </select>
+      </div>
+
+      <div class="menu-item">
+        <label>📏 Tamaño fuente (display): <span class="slider-value" id="fontSizeValue">100%</span></label>
+        <input type="range" id="fontSize" min="50" max="300" value="100"
+               oninput="document.getElementById('fontSizeValue').textContent=this.value+'%'">
+      </div>
+
+      <div class="menu-item">
+        <label>📏 Tamaño fuente (botones): <span class="slider-value" id="btnFontSizeValue">100%</span></label>
+        <input type="range" id="btnFontSize" min="50" max="300" value="100"
+               oninput="document.getElementById('btnFontSizeValue').textContent=this.value+'%'">
+      </div>
+
+      <div class="menu-item">
+        <label>👁️ Opacidad botón ⚙️: <span class="slider-value" id="settingsOpacityValue">30%</span></label>
+        <input type="range" id="settingsOpacity" min="0" max="100" value="30"
+               oninput="document.getElementById('settingsOpacityValue').textContent=this.value+'%'">
+      </div>
+
+      <div class="menu-item">
+        <label>👁️ Opacidad indicador •: <span class="slider-value" id="indicatorOpacityValue">60%</span></label>
+        <input type="range" id="indicatorOpacity" min="0" max="100" value="60"
+               oninput="document.getElementById('indicatorOpacityValue').textContent=this.value+'%'">
+      </div>
+
+      <div class="menu-item">
+        <label>📏 Tamaño indicador •: <span class="slider-value" id="indicatorSizeValue">8px</span></label>
+        <input type="range" id="indicatorSize" min="4" max="16" value="8"
+               oninput="document.getElementById('indicatorSizeValue').textContent=this.value+'px'">
+      </div>
+
+      <div class="menu-buttons">
+        <button class="btn-save" onclick="saveSettings()">💾 Guardar</button>
+        <button class="btn-reset" onclick="resetSettings()">🔄 Restaurar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calculator App -->
+  <div class="calculator" id="calculatorApp">
+    <div class="display">
+      <button class="settings-btn" onclick="openSecretMenu()">⚙️</button>
+      <div class="operation" id="operation">0</div>
+      <div class="result" id="result"></div>
+    </div>
+    <div class="buttons">
+      <button class="special" onclick="clearDisplay()">AC</button>
+      <button class="special" onclick="noop()">()</button>
+      <button class="special" onclick="noop()">%</button>
+      <button class="special" onclick="noop()">÷</button>
+      <button onclick="appendNumber(7)">7<span class="digit-indicator" id="indicator-7"></span></button>
+      <button onclick="appendNumber(8)">8<span class="digit-indicator" id="indicator-8"></span></button>
+      <button onclick="appendNumber(9)">9<span class="digit-indicator" id="indicator-9"></span></button>
+      <button class="special" onclick="noop()">×</button>
+      <button onclick="appendNumber(4)">4<span class="digit-indicator" id="indicator-4"></span></button>
+      <button onclick="appendNumber(5)">5<span class="digit-indicator" id="indicator-5"></span></button>
+      <button onclick="appendNumber(6)">6<span class="digit-indicator" id="indicator-6"></span></button>
+      <button class="special" onclick="activateTrap()">−</button>
+      <button onclick="appendNumber(1)">1<span class="digit-indicator" id="indicator-1"></span></button>
+      <button onclick="appendNumber(2)">2<span class="digit-indicator" id="indicator-2"></span></button>
+      <button onclick="appendNumber(3)">3<span class="digit-indicator" id="indicator-3"></span></button>
+      <button class="special" onclick="add()">+</button>
+      <button onclick="appendNumber(0)">0</button>
+      <button onclick="appendDot()">.</button>
+      <button onclick="backspace()">⌫</button>
+      <button class="equal" onclick="calculate()">=</button>
+    </div>
+  </div>
+
+  <script>
+    // ================================================
+    // DETECCIÓN iOS
+    // ================================================
+    function isIOS() {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    }
+
+    function isInStandalone() {
+      // navigator.standalone es la API correcta de iOS
+      return ('standalone' in window.navigator && window.navigator.standalone) ||
+             window.matchMedia('(display-mode: standalone)').matches;
+    }
+
+    function isIOSSafari() {
+      return isIOS() &&
+             /Safari/.test(navigator.userAgent) &&
+             !/CriOS|FxiOS|OPiOS|mercury/.test(navigator.userAgent);
+    }
+
+    // ================================================
+    // localStorage iOS-SAFE (modo privado lanza excepciones)
+    // ================================================
+    function safeLocalStorage(action, key, value) {
+      try {
+        if (action === 'get') return localStorage.getItem(key);
+        if (action === 'set') { localStorage.setItem(key, value); return true; }
+        if (action === 'remove') { localStorage.removeItem(key); return true; }
+      } catch (e) {
+        console.warn('[iOS] localStorage no disponible:', e.message);
+        return null;
+      }
+    }
+
+    // ================================================
+    // AUTENTICACIÓN
+    // ================================================
+    const SUPABASE_URL = "https://zgatennqbagmyfbpiakr.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpnYXRlbm5xYmFnbXlmYnBpYWtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMTg3NTEsImV4cCI6MjA4NjU5NDc1MX0.5c_IoL3_PM1zwFsuvblkoCoWbP9-4BSaMcIwSasLprw";
+
+    function getDeviceId() {
+      let id = safeLocalStorage('get', 'device_id');
+      if (!id) {
+        id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
+        safeLocalStorage('set', 'device_id', id);
+      }
+      return id || ('ios-' + Date.now());
+    }
+
+    async function validateSession() {
+      const session_token = safeLocalStorage('get', 'session_token');
+      const device_id = getDeviceId();
+
+      if (!session_token) return { valid: false, error: "no_token" };
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
+
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/validate`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ session_token, device_id }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        const result = await res.json();
+
+        if (result.valid === true) {
+          safeLocalStorage('set', 'last_known_status', 'valid');
+        } else if (result.error === "revoked") {
+          safeLocalStorage('set', 'last_known_status', 'revoked');
+        }
+
+        return result;
+      } catch (e) {
+        // Sin internet o timeout — usar último estado conocido
+        const lastStatus = safeLocalStorage('get', 'last_known_status');
+        if (lastStatus === 'revoked') {
+          return { valid: false, error: 'revoked' };
+        }
+        // Si la sesión era válida previamente, permitir acceso offline
+        if (lastStatus === 'valid') {
+          return { valid: true, offline: true };
+        }
+        return { valid: false, no_internet: true };
+      }
+    }
+
+    // ================================================
+    // BANNER iOS "Añadir a pantalla de inicio"
+    // ================================================
+    function showIOSBanner() {
+      if (!isIOSSafari() || isInStandalone()) return;
+      const dismissed = safeLocalStorage('get', 'iosBannerDismissed');
+      if (dismissed === 'true') return;
+      document.getElementById('iosBanner').classList.add('show');
+    }
+
+    window.closeiOSBanner = function() {
+      document.getElementById('iosBanner').classList.remove('show');
+      safeLocalStorage('set', 'iosBannerDismissed', 'true');
+    };
+
+    // ================================================
+    // SECRET MENU
+    // ================================================
+    window.clearCurrentOperation = function() {
+      currentOperation = "";
+      document.getElementById('result').textContent = "";
+      partialVisible = false;
+      justCalculated = false;
+      trapMode = false;
+      trapLocked = false;
+      for (let i = 1; i <= 9; i++) {
+        const ind = document.getElementById(`indicator-${i}`);
+        if (ind) ind.classList.remove('show');
+      }
+      updateDisplay();
+      const btn = event.target;
+      const orig = btn.textContent;
+      btn.textContent = '✅ Suma borrada';
+      setTimeout(() => { btn.textContent = orig; }, 1500);
+    };
+
+    window.syncHex = function(colorInput, hexInputId) {
+      document.getElementById(hexInputId).value = colorInput.value.toUpperCase();
+    };
+
+    window.syncColor = function(hexInput, colorInputId) {
+      let hex = hexInput.value.trim();
+      if (hex && !hex.startsWith('#')) hex = '#' + hex;
+      if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+        document.getElementById(colorInputId).value = hex;
+        hexInput.value = hex.toUpperCase();
+      }
+    };
+
+    window.openSecretMenu = function() {
+      const settings = loadSettings();
+
+      document.getElementById('forcedNumber').value = settings.forcedNumber || '';
+
+      document.getElementById('numBgColor').value = settings.numBgColor;
+      document.getElementById('numBgHex').value = settings.numBgColor.toUpperCase();
+      document.getElementById('specialBgColor').value = settings.specialBgColor;
+      document.getElementById('specialBgHex').value = settings.specialBgColor.toUpperCase();
+      document.getElementById('equalBgColor').value = settings.equalBgColor;
+      document.getElementById('equalBgHex').value = settings.equalBgColor.toUpperCase();
+      document.getElementById('bgColor').value = settings.bgColor;
+      document.getElementById('bgColorHex').value = settings.bgColor.toUpperCase();
+      document.getElementById('fontColor').value = settings.fontColor;
+      document.getElementById('fontColorHex').value = settings.fontColor.toUpperCase();
+
+      document.getElementById('fontFamily').value = settings.fontFamily;
+      document.getElementById('fontSize').value = settings.fontSizePercent;
+      document.getElementById('fontSizeValue').textContent = settings.fontSizePercent + '%';
+      document.getElementById('btnFontSize').value = settings.btnFontSizePercent;
+      document.getElementById('btnFontSizeValue').textContent = settings.btnFontSizePercent + '%';
+      document.getElementById('settingsOpacity').value = settings.settingsOpacity;
+      document.getElementById('settingsOpacityValue').textContent = settings.settingsOpacity + '%';
+      document.getElementById('indicatorOpacity').value = settings.indicatorOpacity;
+      document.getElementById('indicatorOpacityValue').textContent = settings.indicatorOpacity + '%';
+      document.getElementById('indicatorSize').value = settings.indicatorSize;
+      document.getElementById('indicatorSizeValue').textContent = settings.indicatorSize + 'px';
+
+      document.getElementById('secretMenu').classList.add('show');
+    };
+
+    window.closeSecretMenu = function() {
+      document.getElementById('secretMenu').classList.remove('show');
+    };
+
+    window.saveSettings = function() {
+      const forcedValue = document.getElementById('forcedNumber').value;
+      const settings = {
+        forcedNumber: forcedValue,
+        numBgColor: document.getElementById('numBgColor').value,
+        specialBgColor: document.getElementById('specialBgColor').value,
+        equalBgColor: document.getElementById('equalBgColor').value,
+        bgColor: document.getElementById('bgColor').value,
+        fontColor: document.getElementById('fontColor').value,
+        fontFamily: document.getElementById('fontFamily').value,
+        fontSizePercent: document.getElementById('fontSize').value,
+        btnFontSizePercent: document.getElementById('btnFontSize').value,
+        settingsOpacity: document.getElementById('settingsOpacity').value,
+        indicatorOpacity: document.getElementById('indicatorOpacity').value,
+        indicatorSize: document.getElementById('indicatorSize').value,
+      };
+      safeLocalStorage('set', 'calcSettings', JSON.stringify(settings));
+      window.forced = (forcedValue && forcedValue.trim() !== '') ? parseFloat(forcedValue) : null;
+      applySettings(settings);
+      closeSecretMenu();
+      alert('✅ Configuración guardada');
+    };
+
+    window.resetSettings = function() {
+      if (!confirm('¿Restaurar configuración por defecto?')) return;
+      safeLocalStorage('remove', 'calcSettings');
+      const defaults = getDefaultSettings();
+      applySettings(defaults);
+      window.forced = null;
+      closeSecretMenu();
+      alert('🔄 Configuración restaurada');
+    };
+
+    function getDefaultSettings() {
+      return {
+        forcedNumber: '',
+        numBgColor: '#333333',
+        specialBgColor: '#636366',
+        equalBgColor: '#ff9500',
+        bgColor: '#000000',
+        fontColor: '#ffffff',
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif",
+        fontSizePercent: '100',
+        btnFontSizePercent: '100',
+        settingsOpacity: '30',
+        indicatorOpacity: '60',
+        indicatorSize: '8',
+      };
+    }
+
+    function loadSettings() {
+      const saved = safeLocalStorage('get', 'calcSettings');
+      if (saved) {
+        try { return JSON.parse(saved); } catch (e) {}
+      }
+      return getDefaultSettings();
+    }
+
+    function applySettings(settings) {
+      const root = document.documentElement;
+      root.style.setProperty('--num-bg', settings.numBgColor);
+      root.style.setProperty('--num-active', adjustBrightness(settings.numBgColor, 20));
+      root.style.setProperty('--special-bg', settings.specialBgColor);
+      root.style.setProperty('--special-active', adjustBrightness(settings.specialBgColor, 20));
+      root.style.setProperty('--equal-bg', settings.equalBgColor);
+      root.style.setProperty('--equal-active', adjustBrightness(settings.equalBgColor, 20));
+      root.style.setProperty('--bg-color', settings.bgColor);
+      root.style.setProperty('--font-color', settings.fontColor);
+      root.style.setProperty('--font-family', settings.fontFamily);
+
+      const baseFontSize = 13.1;
+      const baseResultSize = 6.9;
+      const m = settings.fontSizePercent / 100;
+      root.style.setProperty('--font-size', (baseFontSize * m) + 'vw');
+      root.style.setProperty('--result-font-size', (baseResultSize * m) + 'vw');
+
+      const baseBtnSize = 7.1;
+      const bm = settings.btnFontSizePercent / 100;
+      root.style.setProperty('--btn-font-size', (baseBtnSize * bm) + 'vw');
+
+      root.style.setProperty('--settings-opacity', settings.settingsOpacity / 100);
+      root.style.setProperty('--indicator-opacity', settings.indicatorOpacity / 100);
+      root.style.setProperty('--indicator-size', settings.indicatorSize + 'px');
+    }
+
+    function adjustBrightness(color, percent) {
+      const num = parseInt(color.replace("#", ""), 16);
+      const amt = Math.round(2.55 * percent);
+      const R = Math.min(255, Math.max(0, (num >> 16) + amt));
+      const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
+      const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+      return "#" + (0x1000000 + R*0x10000 + G*0x100 + B).toString(16).slice(1);
+    }
+
+    // ================================================
+    // INICIALIZACIÓN DE LA APP
+    // ================================================
+    async function initApp() {
+      const loadingEl = document.getElementById('loading');
+      const calculatorEl = document.getElementById('calculatorApp');
+
+      try {
+        const result = await validateSession();
+
+        if (result.valid) {
+          loadingEl.classList.add('hidden');
+          calculatorEl.classList.add('visible');
+
+          const settings = loadSettings();
+          applySettings(settings);
+
+          if (settings.forcedNumber && settings.forcedNumber.trim() !== '') {
+            window.forced = parseFloat(settings.forcedNumber);
+          } else {
+            window.forced = null;
+          }
+
+          // Mostrar banner iOS después de 2 segundos si aplica
+          setTimeout(showIOSBanner, 2000);
+
+        } else if (result.error === 'revoked') {
+          window.location.href = '../../fenix.html';
+
+        } else if (result.no_internet) {
+          // Sin internet y sin sesión previa — mostrar error claro
+          loadingEl.classList.add('hidden');
+          alert('Sin conexión a internet. Necesitas activar tu acceso al menos una vez con internet.');
+          window.location.href = '../';
+
+        } else {
+          // Sin sesión válida
+          loadingEl.classList.add('hidden');
+          alert('No tienes acceso. Necesitas un código de activación.');
+          window.location.href = '../';
+        }
+
+      } catch (error) {
+        console.error('[iOS] Error al validar sesión:', error);
+        loadingEl.classList.add('hidden');
+        alert('Error al verificar tu acceso. Intenta de nuevo.');
+        window.location.href = '../';
+      }
+    }
+
+    // ================================================
+    // SERVICE WORKER
+    // ================================================
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('../sw.js', { scope: '../' })
+        .then(() => console.log('[iOS SW] Registrado'))
+        .catch(e => console.warn('[iOS SW] Error:', e));
+    }
+
+    initApp();
+  </script>
+
+  <!-- Calculator Logic -->
+  <script>
+    let operation = document.getElementById("operation");
+    let result = document.getElementById("result");
+    let currentOperation = "";
+    let trapMode = false;
+    let trapLocked = false;
+    window.forced = null;
+    let partialVisible = false;
+    let lastOperation = "";
+    let lastPartialVisible = false;
+    let lastResultText = "";
+    let justCalculated = false;
+
+    function updateDigitIndicator() {
+      for (let i = 1; i <= 9; i++) {
+        const ind = document.getElementById(`indicator-${i}`);
+        if (ind) ind.classList.remove('show');
+      }
+      if (window.forced !== null && window.forced !== undefined) {
+        const currentValue = eval(currentOperation.replace(/\+$/, "")) || 0;
+        const needed = window.forced - currentValue;
+        const digits = Math.abs(needed).toString().replace('.', '').length;
+        if (digits >= 1 && digits <= 9) {
+          const ind = document.getElementById(`indicator-${digits}`);
+          if (ind) ind.classList.add('show');
+        }
+      }
+    }
+
+    function updateDisplay() {
+      operation.textContent = currentOperation || "0";
+      if (!partialVisible) {
+        result.textContent = "";
+        return;
+      }
+      try {
+        let expr = currentOperation.replace(/[+\-×÷.]$/, "");
+        let calcResult = eval(expr);
+        if (!isNaN(calcResult)) {
+          result.textContent = Number(calcResult).toLocaleString("es-CO");
+        } else {
+          result.textContent = "";
+        }
+      } catch {
+        result.textContent = "";
+      }
+    }
+
+    function appendNumber(num) {
+      if (trapLocked) return;
+      if (trapMode) { showTrapResult(); return; }
+      let prevChar = currentOperation.slice(-1);
+      currentOperation += num;
+      if (prevChar === '+' && !partialVisible) partialVisible = true;
+      justCalculated = false;
+      updateDisplay();
+      if (trapMode) updateDigitIndicator();
+    }
+
+    function appendDot() {
+      if (trapLocked) return;
+      currentOperation += ".";
+      justCalculated = false;
+      updateDisplay();
+    }
+
+    function add() {
+      if (trapLocked) return;
+      currentOperation += "+";
+      justCalculated = false;
+      updateDisplay();
+    }
+
+    function clearDisplay() {
+      if (trapLocked || trapMode) return;
+      currentOperation = "";
+      result.textContent = "";
+      partialVisible = false;
+      justCalculated = false;
+      updateDisplay();
+      for (let i = 1; i <= 9; i++) {
+        const ind = document.getElementById(`indicator-${i}`);
+        if (ind) ind.classList.remove('show');
+      }
+    }
+
+    function backspace() {
+      if (trapLocked) return;
+      if (justCalculated) {
+        currentOperation = lastOperation;
+        partialVisible = lastPartialVisible;
+        result.textContent = lastResultText;
+        justCalculated = false;
+        updateDisplay();
+        return;
+      }
+      currentOperation = currentOperation.slice(0, -1);
+      updateDisplay();
+    }
+
+    function activateTrap() {
+      if (trapLocked) return;
+      trapMode = true;
+      currentOperation += "+";
+      justCalculated = false;
+      updateDisplay();
+      updateDigitIndicator();
+    }
+
+    function showTrapResult() {
+      let actual = eval(currentOperation.replace(/\+$/, "")) || 0;
+      if (window.forced !== null && window.forced !== undefined) {
+        let needed = window.forced - actual;
+        currentOperation += needed;
+        updateDisplay();
+        trapLocked = true;
+      } else {
+        result.textContent = "⚠ No forzado";
+      }
+    }
+
+    function calculate() {
+      try {
+        let calcResult = eval(currentOperation);
+        lastOperation = currentOperation;
+        lastPartialVisible = partialVisible;
+        lastResultText = result.textContent;
+        if (trapMode) {
+          operation.textContent = window.forced;
+          result.textContent = "";
+          currentOperation = window.forced.toString();
+        } else {
+          result.textContent = Number(calcResult).toLocaleString("es-CO");
+          operation.textContent = result.textContent;
+          currentOperation = calcResult.toString();
+        }
+        trapMode = false;
+        trapLocked = false;
+        partialVisible = false;
+        justCalculated = true;
+        for (let i = 1; i <= 9; i++) {
+          const ind = document.getElementById(`indicator-${i}`);
+          if (ind) ind.classList.remove('show');
+        }
+        updateDisplay();
+      } catch {
+        result.textContent = "Error";
+      }
+    }
+
+    function forceNumber() {}
+    function noop() {}
+  </script>
+</body>
+</html>
