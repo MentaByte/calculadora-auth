@@ -3,7 +3,7 @@
    Versión iOS: optimizado para Safari/WebKit
    =============================================== */
 
-const CACHE_NAME = 'calculadora-ios-v1.0';
+const CACHE_NAME = 'calculadora-ios-v1.1';
 
 const BASE = self.location.pathname.replace(/sw\.js$/, '');
 
@@ -77,18 +77,22 @@ self.addEventListener('fetch', event => {
   const isLocal = url.origin === self.location.origin;
   if (!isLocal) return;
 
-  // core/index.html: network-first para validación fresca de sesión
-  if (url.pathname.includes('core/index.html')) {
+  // core/index.html y core/ (con o sin ?t=TOKEN): network-first
+  // Normalizamos la clave de caché sin query params para que /core/?t=TOKEN
+  // se sirva y cachee igual que /core/index.html
+  if (url.pathname.includes('core/index.html') || url.pathname.endsWith('core/')) {
+    const normalizedUrl = url.origin + url.pathname;
+    const normalizedRequest = new Request(normalizedUrl);
     event.respondWith(
-      fetch(event.request, { cache: 'no-store' })
+      fetch(normalizedRequest, { cache: 'no-store' })
         .then(response => {
           if (response.ok) {
             const toCache = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, toCache));
+            caches.open(CACHE_NAME).then(cache => cache.put(normalizedRequest, toCache));
           }
           return response;
         })
-        .catch(() => caches.match(event.request))
+        .catch(() => caches.match(normalizedRequest))
     );
     return;
   }

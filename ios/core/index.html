@@ -943,6 +943,17 @@
       const loadingEl = document.getElementById('loading');
       const calculatorEl = document.getElementById('calculatorApp');
 
+      // Rescatar token si viene de activación vía URL (?t=TOKEN)
+      // Respaldo por si localStorage falló durante la redirección en Safari
+      const urlParams = new URLSearchParams(window.location.search);
+      const tokenFromUrl = urlParams.get('t');
+      if (tokenFromUrl) {
+        safeLocalStorage('set', 'session_token', tokenFromUrl);
+        safeLocalStorage('set', 'last_known_status', 'valid');
+        // Limpiar URL sin recargar — queda /ios/core/ sin parámetros
+        history.replaceState(null, '', location.pathname);
+      }
+
       try {
         const result = await validateSession();
 
