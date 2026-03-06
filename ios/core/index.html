@@ -977,15 +977,13 @@
           window.location.href = '../../fenix.html';
 
         } else if (result.no_internet) {
-          // Sin internet y sin sesión previa — mostrar error claro
+          // Sin internet y sin sesión previa — redirigir al formulario de activación
           loadingEl.classList.add('hidden');
-          alert('Sin conexión a internet. Necesitas activar tu acceso al menos una vez con internet.');
           window.location.href = '../';
 
         } else {
-          // Sin sesión válida
+          // Sin sesión válida — redirigir al formulario de activación
           loadingEl.classList.add('hidden');
-          alert('No tienes acceso. Necesitas un código de activación.');
           window.location.href = '../';
         }
 

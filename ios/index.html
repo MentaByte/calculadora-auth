@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Activación - Calculadora</title>
+  <title>Calculadora</title>
 
   <!-- iOS PWA meta tags -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -68,17 +68,119 @@
       color: #8e8e93;
       font-size: 15px;
       line-height: 1.5;
-      margin-bottom: 24px;
+      margin-bottom: 0;
+    }
+
+    /* ─── Vista: instrucciones de instalación ─── */
+    .steps {
+      margin-top: 28px;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: #3a3a3c;
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+
+    .step-num {
+      background: #ff9500;
+      color: #000;
+      font-weight: 700;
+      font-size: 13px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-text {
+      color: #ebebf5cc;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .step-text strong {
+      color: #ffffff;
+    }
+
+    .share-icon {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      vertical-align: middle;
+      margin: 0 1px -1px;
+    }
+
+    /* ─── Vista: formulario de código (standalone) ─── */
+    .form-group {
+      margin-top: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    #codeInput {
+      background: #3a3a3c;
+      border: 1px solid #48484a;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 17px;
+      color: #ffffff;
+      text-align: center;
+      letter-spacing: 2px;
+      outline: none;
+      -webkit-appearance: none;
+      width: 100%;
+      font-family: inherit;
+    }
+
+    #codeInput::placeholder {
+      color: #48484a;
+      letter-spacing: normal;
+    }
+
+    #codeInput:focus {
+      border-color: #ff9500;
+    }
+
+    #submitBtn {
+      background: #ff9500;
+      color: #000000;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      font-family: inherit;
+      transition: opacity 0.2s;
+    }
+
+    #submitBtn:disabled {
+      opacity: 0.5;
+      cursor: default;
     }
 
     .loader {
       border: 3px solid #3a3a3c;
       border-top: 3px solid #ff9500;
       border-radius: 50%;
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 36px;
       animation: spin 0.8s linear infinite;
-      margin: 16px auto;
+      margin: 12px auto 0;
+      display: none;
     }
 
     @keyframes spin {
@@ -89,80 +191,77 @@
     .message {
       border-radius: 12px;
       padding: 14px 16px;
-      margin-top: 16px;
+      margin-top: 12px;
       font-size: 14px;
       line-height: 1.4;
+      display: none;
     }
 
     .message.error {
       background: rgba(255, 69, 58, 0.15);
       border: 1px solid rgba(255, 69, 58, 0.3);
       color: #ff453a;
+      display: block;
     }
 
     .message.success {
       background: rgba(48, 209, 88, 0.15);
       border: 1px solid rgba(48, 209, 88, 0.3);
       color: #30d158;
-    }
-
-    /* Banner de instalación iOS */
-    #iosBanner {
-      display: none;
-      background: #3a3a3c;
-      border-radius: 12px;
-      padding: 14px 16px;
-      margin-top: 20px;
-      text-align: left;
-    }
-
-    #iosBanner.show {
       display: block;
-    }
-
-    #iosBanner p {
-      color: #ebebf5cc;
-      font-size: 13px;
-      margin: 0;
-      line-height: 1.5;
-    }
-
-    #iosBanner .banner-title {
-      color: #ffffff;
-      font-weight: 600;
-      font-size: 14px;
-      margin-bottom: 6px;
-      display: block;
-    }
-
-    .share-icon {
-      display: inline-block;
-      width: 18px;
-      height: 18px;
-      vertical-align: middle;
-      margin: 0 2px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <span class="icon">🔐</span>
-    <h1 id="title">Activando acceso...</h1>
-    <p id="subtitle">Por favor espera mientras validamos tu código.</p>
-    <div class="loader" id="loader"></div>
-    <div id="message"></div>
-    <div id="iosBanner">
-      <span class="banner-title">📲 Instalar en tu iPhone</span>
-      <p>
-        Toca
-        <svg class="share-icon" viewBox="0 0 24 24" fill="none" stroke="#0a84ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M8 6H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-2"/>
-          <polyline points="15 3 12 0 9 3"/>
-          <line x1="12" y1="0" x2="12" y2="13"/>
-        </svg>
-        en Safari y luego <strong style="color:#fff">"Añadir a pantalla de inicio"</strong> para instalar la app.
-      </p>
+
+  <!-- Vista A: instrucciones para instalar (modo navegador) -->
+  <div id="installView" class="container" style="display:none">
+    <span class="icon">📱</span>
+    <h1>Instala la app</h1>
+    <p>Para usar Calculadora, añádela primero a tu pantalla de inicio.</p>
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">1</span>
+        <span class="step-text">
+          Toca
+          <svg class="share-icon" viewBox="0 0 24 24" fill="none" stroke="#0a84ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 6H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-2"/>
+            <polyline points="15 3 12 0 9 3"/>
+            <line x1="12" y1="0" x2="12" y2="13"/>
+          </svg>
+          en la barra de Safari
+        </span>
+      </div>
+      <div class="step">
+        <span class="step-num">2</span>
+        <span class="step-text">Selecciona <strong>"Añadir a pantalla de inicio"</strong></span>
+      </div>
+      <div class="step">
+        <span class="step-num">3</span>
+        <span class="step-text">Abre la app desde tu pantalla de inicio e ingresa tu código</span>
+      </div>
     </div>
+  </div>
+
+  <!-- Vista B: entrada de código (modo standalone / pantalla de inicio) -->
+  <div id="codeView" class="container" style="display:none">
+    <span class="icon">🔐</span>
+    <h1>Activar acceso</h1>
+    <p>Introduce tu código de acceso para continuar.</p>
+    <div class="form-group">
+      <input
+        type="text"
+        id="codeInput"
+        placeholder="Código de acceso"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+      >
+      <button id="submitBtn" onclick="submitCode()">Continuar</button>
+    </div>
+    <div class="loader" id="loader"></div>
+    <div id="message" class="message"></div>
   </div>
 
   <script>
@@ -176,7 +275,6 @@
         if (action === 'set') { localStorage.setItem(key, value); return true; }
         if (action === 'remove') { localStorage.removeItem(key); return true; }
       } catch (e) {
-        // localStorage no disponible (modo privado iOS)
         console.warn('[iOS] localStorage no disponible:', e.message);
         return null;
       }
@@ -190,12 +288,6 @@
     function isInStandalone() {
       return ('standalone' in window.navigator && window.navigator.standalone) ||
              window.matchMedia('(display-mode: standalone)').matches;
-    }
-
-    function isIOSSafari() {
-      return isIOS() &&
-             /Safari/.test(navigator.userAgent) &&
-             !/CriOS|FxiOS|OPiOS|mercury/.test(navigator.userAgent);
     }
 
     // ================================================
@@ -235,100 +327,80 @@
     }
 
     // ================================================
-    // UI HELPERS
+    // UI
     // ================================================
-    const titleEl    = document.getElementById('title');
-    const subtitleEl = document.getElementById('subtitle');
     const loaderEl   = document.getElementById('loader');
     const messageEl  = document.getElementById('message');
-    const iosBanner  = document.getElementById('iosBanner');
+    const submitBtn  = document.getElementById('submitBtn');
 
-    function showError(title, subtitle, detail) {
-      loaderEl.style.display = 'none';
-      document.querySelector('.icon').textContent = '❌';
-      titleEl.textContent = title;
-      subtitleEl.textContent = subtitle;
+    function showError(text) {
       messageEl.className = 'message error';
-      messageEl.textContent = detail;
+      messageEl.textContent = text;
     }
 
-    function showSuccess(title, subtitle, detail) {
-      loaderEl.style.display = 'none';
-      document.querySelector('.icon').textContent = '✅';
-      titleEl.textContent = title;
-      subtitleEl.textContent = subtitle;
-      messageEl.className = 'message success';
-      messageEl.textContent = detail;
-    }
+    const ERROR_MESSAGES = {
+      invalid_code:    "El código no existe o ya no es válido.",
+      revoked:         "Este acceso ha sido revocado por el administrador.",
+      device_mismatch: "Este código ya está activado en otro dispositivo.",
+    };
 
     // ================================================
-    // FLUJO DE ACTIVACIÓN
+    // LÓGICA DE ACTIVACIÓN (modo standalone)
     // ================================================
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("k");
+    window.submitCode = async function() {
+      const code = document.getElementById('codeInput').value.trim();
+      if (!code) return;
 
-    if (!code) {
-      loaderEl.style.display = 'none';
-      document.querySelector('.icon').textContent = '⚠️';
-      titleEl.textContent = 'Código no válido';
-      subtitleEl.textContent = 'No se proporcionó un código de activación.';
+      loaderEl.style.display = 'block';
+      submitBtn.disabled = true;
+      messageEl.className = 'message';
+      messageEl.textContent = '';
+
+      try {
+        const result = await activateLicense(code);
+
+        if (result.session_token) {
+          saveSession(result.session_token);
+          window.location.href = './core/?t=' + encodeURIComponent(result.session_token);
+        } else {
+          loaderEl.style.display = 'none';
+          submitBtn.disabled = false;
+          showError(ERROR_MESSAGES[result.error] || "Ocurrió un error desconocido.");
+        }
+
+      } catch (e) {
+        loaderEl.style.display = 'none';
+        submitBtn.disabled = false;
+        showError("Sin conexión al servidor. Verifica tu internet e intenta de nuevo.");
+      }
+    };
+
+    // Permitir enviar con la tecla Enter
+    document.getElementById('codeInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') submitCode();
+    });
+
+    // ================================================
+    // INICIALIZACIÓN: elegir qué vista mostrar
+    // ================================================
+    if (isInStandalone()) {
+      // Abierto desde la pantalla de inicio — mostrar formulario de código
+      document.getElementById('codeView').style.display = 'block';
+
+      // Pre-rellenar si viene con ?k=CODE (útil si el admin comparte enlace directo)
+      const params = new URLSearchParams(window.location.search);
+      const preCode = params.get('k');
+      if (preCode) {
+        document.getElementById('codeInput').value = preCode;
+      }
+
     } else {
-      activateLicense(code)
-        .then(result => {
-          if (result.session_token) {
-            saveSession(result.session_token);
-
-            showSuccess(
-              '¡Activado!',
-              'Tu acceso está listo.',
-              '✓ Acceso activado correctamente'
-            );
-
-            // En iOS: mostrar instrucciones de instalación si no está en standalone
-            if (isIOS() && !isInStandalone()) {
-              iosBanner.classList.add('show');
-            }
-
-            // Redirigir a la calculadora con token en URL como respaldo
-            // Si localStorage falla en el momento de la redirección, el token
-            // llega seguro vía ?t= y se guarda al cargar /core/
-            const targetUrl = './core/?t=' + encodeURIComponent(result.session_token);
-            if (isIOS()) {
-              // En iOS, pequeño delay para que el usuario vea el mensaje de éxito
-              // y luego redirigir de forma segura
-              setTimeout(() => {
-                window.location.href = targetUrl;
-              }, 1200);
-            } else {
-              setTimeout(() => {
-                window.location.replace(targetUrl);
-              }, 800);
-            }
-
-          } else {
-            const mensajes = {
-              invalid_code: "El código no existe o ya no es válido.",
-              revoked: "Este acceso ha sido revocado por el administrador.",
-              device_mismatch: "Este código ya está activado en otro dispositivo.",
-            };
-            showError(
-              'Error de activación',
-              mensajes[result.error] || "Ocurrió un error desconocido.",
-              'No se pudo activar. Contacta al administrador.'
-            );
-          }
-        })
-        .catch(err => {
-          showError(
-            'Sin conexión',
-            'No se pudo conectar con el servidor. Verifica tu internet e intenta de nuevo.',
-            'Error: ' + err.message
-          );
-        });
+      // Abierto en el navegador — solo mostrar instrucciones de instalación
+      document.getElementById('installView').style.display = 'block';
     }
 
     // ================================================
-    // SERVICE WORKER (iOS Safari sí lo soporta desde iOS 11.3)
+    // SERVICE WORKER
     // ================================================
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js')
