@@ -6,7 +6,6 @@
   <meta name="theme-color" content="#6b5f00">
   <title>Calculadora</title>
   
-  <!-- PWA -->
   <link rel="manifest" href="../manifest.json">
   
   <style>
@@ -451,13 +450,11 @@
   </style>
 </head>
 <body>
-  <!-- Loading Screen -->
   <div id="loading">
     <div class="spinner"></div>
     <p>Validando acceso...</p>
   </div>
 
-  <!-- PWA Install Banner -->
   <div id="installBanner">
     <div class="message">
       📱 Instala esta app para una mejor experiencia
@@ -466,7 +463,6 @@
     <button class="close-btn" onclick="closeInstallBanner()">×</button>
   </div>
 
-  <!-- Secret Menu -->
   <div id="secretMenu">
     <div class="menu-content">
       <div class="menu-header">
@@ -569,7 +565,6 @@
     </div>
   </div>
 
-  <!-- Calculator App -->
   <div class="calculator" id="calculatorApp">
     <div class="display">
       <button class="settings-btn" onclick="openSecretMenu()">⚙️</button>
@@ -670,7 +665,6 @@
       const banner = document.getElementById('installBanner');
       const dismissed = localStorage.getItem('installBannerDismissed');
       
-      // Si ya está instalada o el usuario la cerró, no mostrar
       if (window.matchMedia('(display-mode: standalone)').matches || dismissed === 'true') {
         return;
       }
@@ -700,7 +694,6 @@
       localStorage.setItem('installBannerDismissed', 'true');
     }
     
-    // Si ya está instalada, ajustar el margen
     if (window.matchMedia('(display-mode: standalone)').matches) {
       document.documentElement.style.setProperty('--btn-size', '23.8vw');
     }
@@ -709,7 +702,6 @@
     // SECRET MENU FUNCTIONS
     // ================================================
     
-    // Limpiar la operación actual pero mantener el número forzado
     window.clearCurrentOperation = function() {
       currentOperation = "";
       result.textContent = "";
@@ -718,7 +710,6 @@
       trapMode = false;
       trapLocked = false;
       
-      // Ocultar indicadores
       for (let i = 1; i <= 9; i++) {
         const indicator = document.getElementById(`indicator-${i}`);
         if (indicator) indicator.classList.remove('show');
@@ -726,7 +717,6 @@
       
       updateDisplay();
       
-      // Mantener el menú abierto y mostrar confirmación
       const btn = event.target;
       const originalText = btn.textContent;
       btn.textContent = '✅ Suma borrada';
@@ -738,20 +728,15 @@
       }, 1500);
     }
     
-    // Sincronizar color picker con input HEX
     window.syncHex = function(colorInput, hexInputId) {
       document.getElementById(hexInputId).value = colorInput.value.toUpperCase();
     }
     
     window.syncColor = function(hexInput, colorInputId) {
       let hex = hexInput.value.trim();
-      
-      // Agregar # si no lo tiene
       if (hex && !hex.startsWith('#')) {
         hex = '#' + hex;
       }
-      
-      // Validar formato HEX
       if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
         document.getElementById(colorInputId).value = hex;
         hexInput.value = hex.toUpperCase();
@@ -760,14 +745,10 @@
     
     window.openSecretMenu = function() {
       const menu = document.getElementById('secretMenu');
-      
-      // Cargar valores actuales en el formulario
       const settings = loadSettings();
       
-      // Número forzado
       document.getElementById('forcedNumber').value = settings.forcedNumber || '';
       
-      // Colores con HEX
       document.getElementById('numBgColor').value = settings.numBgColor;
       document.getElementById('numBgHex').value = settings.numBgColor.toUpperCase();
       
@@ -783,7 +764,6 @@
       document.getElementById('fontColor').value = settings.fontColor;
       document.getElementById('fontColorHex').value = settings.fontColor.toUpperCase();
       
-      // Fuente y tamaños
       document.getElementById('fontFamily').value = settings.fontFamily;
       document.getElementById('fontSize').value = settings.fontSizePercent;
       document.getElementById('fontSizeValue').textContent = settings.fontSizePercent + '%';
@@ -791,15 +771,12 @@
       document.getElementById('btnFontSize').value = settings.btnFontSizePercent;
       document.getElementById('btnFontSizeValue').textContent = settings.btnFontSizePercent + '%';
       
-      // Opacidad del engranaje
       document.getElementById('settingsOpacity').value = settings.settingsOpacity;
       document.getElementById('settingsOpacityValue').textContent = settings.settingsOpacity + '%';
       
-      // Opacidad del indicador
       document.getElementById('indicatorOpacity').value = settings.indicatorOpacity;
       document.getElementById('indicatorOpacityValue').textContent = settings.indicatorOpacity + '%';
       
-      // Tamaño del indicador
       document.getElementById('indicatorSize').value = settings.indicatorSize;
       document.getElementById('indicatorSizeValue').textContent = settings.indicatorSize + 'px';
       
@@ -830,13 +807,10 @@
       
       localStorage.setItem('calcSettings', JSON.stringify(settings));
       
-      // CRÍTICO: Actualizar el número forzado globalmente
       if (forcedValue && forcedValue.trim() !== '') {
         window.forced = parseFloat(forcedValue);
-        console.log('✅ Número forzado establecido:', window.forced);
       } else {
         window.forced = null;
-        console.log('❌ Número forzado eliminado');
       }
       
       applySettings(settings);
@@ -872,11 +846,9 @@
     
     function loadSettings() {
       const saved = localStorage.getItem('calcSettings');
-      
       if (saved) {
         return JSON.parse(saved);
       }
-      
       return {
         forcedNumber: '',
         numBgColor: '#fbd9d7',
@@ -896,7 +868,6 @@
     function applySettings(settings) {
       const root = document.documentElement;
       
-      // Colores
       root.style.setProperty('--num-bg', settings.numBgColor);
       root.style.setProperty('--num-active', adjustBrightness(settings.numBgColor, -10));
       root.style.setProperty('--special-bg', settings.specialBgColor);
@@ -906,10 +877,8 @@
       root.style.setProperty('--bg-color', settings.bgColor);
       root.style.setProperty('--font-color', settings.fontColor);
       
-      // Fuente
       root.style.setProperty('--font-family', settings.fontFamily);
       
-      // Tamaño de fuente del display
       const baseFontSize = 13.1;
       const baseResultSize = 6.9;
       const multiplier = settings.fontSizePercent / 100;
@@ -917,20 +886,16 @@
       root.style.setProperty('--font-size', (baseFontSize * multiplier) + 'vw');
       root.style.setProperty('--result-font-size', (baseResultSize * multiplier) + 'vw');
       
-      // Tamaño de fuente de los botones
       const baseBtnSize = 7.1;
       const btnMultiplier = settings.btnFontSizePercent / 100;
       root.style.setProperty('--btn-font-size', (baseBtnSize * btnMultiplier) + 'vw');
       
-      // Opacidad del botón de configuración
       const opacity = settings.settingsOpacity / 100;
       root.style.setProperty('--settings-opacity', opacity);
       
-      // Opacidad del indicador de dígitos
       const indicatorOpacity = settings.indicatorOpacity / 100;
       root.style.setProperty('--indicator-opacity', indicatorOpacity);
       
-      // Tamaño del indicador
       root.style.setProperty('--indicator-size', settings.indicatorSize + 'px');
     }
     
@@ -945,9 +910,6 @@
         .toString(16).slice(1);
     }
 
-    // ================================================
-    // VALIDACIÓN DE SESIÓN AL CARGAR
-    // ================================================
     async function initApp() {
       const loadingEl = document.getElementById('loading');
       const calculatorEl = document.getElementById('calculatorApp');
@@ -956,25 +918,18 @@
         const result = await validateSession();
 
         if (result.valid) {
-          // ✅ Sesión válida - cargar calculadora
-          console.log('✅ Sesión válida');
           loadingEl.classList.add('hidden');
           calculatorEl.classList.add('visible');
           
-          // Cargar y aplicar configuración guardada
           const settings = loadSettings();
           applySettings(settings);
           
-          // CRÍTICO: Cargar número forzado si existe
           if (settings.forcedNumber && settings.forcedNumber.trim() !== '') {
             window.forced = parseFloat(settings.forcedNumber);
-            console.log('✅ Número forzado cargado al inicio:', window.forced);
           } else {
             window.forced = null;
-            console.log('ℹ️ No hay número forzado configurado');
           }
           
-          // Mostrar banner de instalación si aplica
           setTimeout(() => {
             if (deferredPrompt) {
               showInstallBanner();
@@ -982,103 +937,67 @@
           }, 1000);
           
         } else if (result.error === "revoked") {
-          // ❌ Acceso revocado - redirigir
-          console.log('❌ Acceso revocado');
           window.location.href = "../fenix.html";
           
         } else if (result.no_internet) {
-          // ⚠️ Sin internet pero con sesión previa válida
-          console.log('⚠️ Sin internet - usando caché');
           loadingEl.classList.add('hidden');
           calculatorEl.classList.add('visible');
           
-          // Cargar configuración guardada
           const settings = loadSettings();
           applySettings(settings);
           if (settings.forcedNumber && settings.forcedNumber.trim() !== '') {
             window.forced = parseFloat(settings.forcedNumber);
-            console.log('✅ Número forzado cargado (offline):', window.forced);
           } else {
             window.forced = null;
           }
           
         } else {
-          // ❌ Sin sesión - redirigir a inicio
-          console.log('❌ Sin sesión válida');
           alert('No tienes acceso. Necesitas un código de activación.');
           window.location.href = "../";
         }
       } catch (error) {
-        console.error('Error al validar sesión:', error);
         loadingEl.classList.add('hidden');
         alert('Error al validar tu sesión. Intenta de nuevo.');
       }
     }
 
-    // ================================================
-    // REGISTRO DEL SERVICE WORKER
-    // ================================================
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('../sw.js')
         .then(reg => console.log('✅ Service Worker registrado'))
         .catch(err => console.error('❌ Error al registrar SW:', err));
     }
 
-    // ================================================
-    // INICIAR APP
-    // ================================================
     initApp();
   </script>
 
-  <!-- Calculator Logic -->
   <script>
     let operation = document.getElementById("operation");
     let result = document.getElementById("result");
     let currentOperation = "";
     let trapMode = false;
     let trapLocked = false;
-    window.forced = null;  // ← CAMBIO: ahora es global
+    window.forced = null;
     let partialVisible = false;
     let lastOperation = "";
     let lastPartialVisible = false;
     let lastResultText = "";
     let justCalculated = false;
     
-    // Actualizar indicador de dígitos
     function updateDigitIndicator() {
-      // Ocultar todos los indicadores
       for (let i = 1; i <= 9; i++) {
         const indicator = document.getElementById(`indicator-${i}`);
         if (indicator) indicator.classList.remove('show');
       }
       
-      // Si hay un número forzado configurado
       if (window.forced !== null && window.forced !== undefined) {
         const currentValue = eval(currentOperation.replace(/\+$/, "")) || 0;
         const needed = window.forced - currentValue;
         const digits = Math.abs(needed).toString().replace('.', '').length;
         
-        console.log('🎯 Indicador Debug:', {
-          forzado: window.forced,
-          actual: currentValue,
-          necesita: needed,
-          digitos: digits
-        });
-        
-        // Mostrar indicador en el botón correspondiente (1-9)
         if (digits >= 1 && digits <= 9) {
           const indicator = document.getElementById(`indicator-${digits}`);
-          if (indicator) {
-            indicator.classList.add('show');
-            console.log(`✅ Mostrando indicador en botón ${digits}`);
-          } else {
-            console.log(`❌ No se encontró indicador-${digits}`);
-          }
-        } else {
-          console.log(`⚠️ El número tiene ${digits} dígitos (fuera de rango 1-9)`);
+          if (indicator) indicator.classList.add('show');
         }
-      } else {
-        console.log('❌ No hay número forzado configurado');
       }
     }
     
@@ -1112,44 +1031,29 @@
       if (prevChar === '+' && !partialVisible) {
         partialVisible = true;
       }
-      justCalculated = false;
       updateDisplay();
-      
-      // Actualizar indicador si estamos en modo trap
-      if (trapMode) {
-        updateDigitIndicator();
-      }
     }
     
     function appendDot() {
       if (trapLocked) return;
       currentOperation += ".";
-      justCalculated = false;
       updateDisplay();
     }
     
     function add() {
       if (trapLocked) return;
       currentOperation += "+";
-      justCalculated = false;
       updateDisplay();
     }
     
     function clearDisplay() {
       if (trapLocked) return;
-      
-      // Si está en modo trap (después de presionar -), no limpiar
-      if (trapMode) {
-        return;
-      }
-      
       currentOperation = "";
       result.textContent = "";
       partialVisible = false;
       justCalculated = false;
       updateDisplay();
       
-      // Ocultar indicadores
       for (let i = 1; i <= 9; i++) {
         const indicator = document.getElementById(`indicator-${i}`);
         if (indicator) indicator.classList.remove('show');
@@ -1170,18 +1074,14 @@
       updateDisplay();
     }
     
-    // Función no utilizada (el menú se abre solo con el engranaje)
-    function forceNumber() {
-      // Vacía - ya no se usa
-    }
+    function forceNumber() {}
     
     function activateTrap() {
       if (trapLocked) return;
       trapMode = true;
       currentOperation += "+";
-      justCalculated = false;
       updateDisplay();
-      updateDigitIndicator();  // Mostrar indicador
+      updateDigitIndicator();
     }
     
     function showTrapResult() {
@@ -1202,27 +1102,31 @@
         lastOperation = currentOperation;
         lastPartialVisible = partialVisible;
         lastResultText = result.textContent;
+        
         if (trapMode) {
-          operation.textContent = window.forced;
-          result.textContent = "";
+          // Deja arriba en pequeño los números que llevaron a la operación (incluyendo el truco)
+          operation.textContent = currentOperation;
+          // Muestra abajo el total final en grande
+          result.textContent = Number(window.forced).toLocaleString("es-CO");
           currentOperation = window.forced.toString();
         } else {
+          // Deja arriba en pequeño la operación matemática que digitó el usuario
+          operation.textContent = currentOperation;
+          // Muestra abajo el total real en grande
           result.textContent = Number(calcResult).toLocaleString("es-CO");
-          operation.textContent = result.textContent;
           currentOperation = calcResult.toString();
         }
+        
         trapMode = false;
         trapLocked = false;
         partialVisible = false;
         justCalculated = true;
         
-        // Ocultar indicadores
         for (let i = 1; i <= 9; i++) {
           const indicator = document.getElementById(`indicator-${i}`);
           if (indicator) indicator.classList.remove('show');
         }
         
-        updateDisplay();
       } catch {
         result.textContent = "Error";
       }
