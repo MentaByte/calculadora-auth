@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#6b5f00">
   <title>Calculadora</title>
   
+  <!-- PWA -->
   <link rel="manifest" href="../manifest.json">
   
   <style>
@@ -147,6 +148,7 @@
       position: relative;
     }
     
+    /* Botón de configuración oculto */
     .settings-btn {
       position: absolute;
       top: 2vw;
@@ -169,6 +171,7 @@
       opacity: 0.8;
     }
     
+    /* Indicador de dígitos */
     .digit-indicator {
       position: absolute;
       bottom: 8px;
@@ -186,6 +189,18 @@
     
     .digit-indicator.show {
       display: block;
+    }
+    
+    .expression {
+      font-size: calc(var(--font-size) * 0.32);
+      color: var(--font-color);
+      opacity: 0.5;
+      word-wrap: break-word;
+      text-align: right;
+      line-height: 1.2;
+      font-family: var(--font-family);
+      min-height: 1.2em;
+      padding-bottom: 0.5vw;
     }
     
     .operation {
@@ -448,11 +463,13 @@
   </style>
 </head>
 <body>
+  <!-- Loading Screen -->
   <div id="loading">
     <div class="spinner"></div>
     <p>Validando acceso...</p>
   </div>
 
+  <!-- PWA Install Banner -->
   <div id="installBanner">
     <div class="message">
       📱 Instala esta app para una mejor experiencia
@@ -461,6 +478,7 @@
     <button class="close-btn" onclick="closeInstallBanner()">×</button>
   </div>
 
+  <!-- Secret Menu -->
   <div id="secretMenu">
     <div class="menu-content">
       <div class="menu-header">
@@ -563,9 +581,11 @@
     </div>
   </div>
 
+  <!-- Calculator App -->
   <div class="calculator" id="calculatorApp">
     <div class="display">
       <button class="settings-btn" onclick="openSecretMenu()">⚙️</button>
+      <div class="expression" id="expression"></div>
       <div class="operation" id="operation">0</div>
       <div class="result" id="result"></div>
     </div>
@@ -648,8 +668,11 @@
       localStorage.removeItem("last_known_status");
     }
 
+    // ================================================
     // PWA INSTALLATION
+    // ================================================
     let deferredPrompt;
+    
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
@@ -659,9 +682,12 @@
     function showInstallBanner() {
       const banner = document.getElementById('installBanner');
       const dismissed = localStorage.getItem('installBannerDismissed');
+      
+      // Si ya está instalada o el usuario la cerró, no mostrar
       if (window.matchMedia('(display-mode: standalone)').matches || dismissed === 'true') {
         return;
       }
+      
       banner.classList.add('show');
     }
     
@@ -670,8 +696,14 @@
         alert('La instalación no está disponible en este navegador.');
         return;
       }
+      
       deferredPrompt.prompt();
-      await deferredPrompt.userChoice;
+      const { outcome } = await deferredPrompt.userChoice;
+      
+      if (outcome === 'accepted') {
+        console.log('Usuario instaló la PWA');
+      }
+      
       deferredPrompt = null;
       document.getElementById('installBanner').classList.remove('show');
     }
@@ -681,11 +713,16 @@
       localStorage.setItem('installBannerDismissed', 'true');
     }
     
+    // Si ya está instalada, ajustar el margen
     if (window.matchMedia('(display-mode: standalone)').matches) {
       document.documentElement.style.setProperty('--btn-size', '23.8vw');
     }
 
+    // ================================================
     // SECRET MENU FUNCTIONS
+    // ================================================
+    
+    // Limpiar la operación actual pero mantener el número forzado
     window.clearCurrentOperation = function() {
       currentOperation = "";
       result.textContent = "";
@@ -694,12 +731,15 @@
       trapMode = false;
       trapLocked = false;
       
+      // Ocultar indicadores
       for (let i = 1; i <= 9; i++) {
         const indicator = document.getElementById(`indicator-${i}`);
         if (indicator) indicator.classList.remove('show');
       }
       
       updateDisplay();
+      
+      // Mantener el menú abierto y mostrar confirmación
       const btn = event.target;
       const originalText = btn.textContent;
       btn.textContent = '✅ Suma borrada';
@@ -711,15 +751,20 @@
       }, 1500);
     }
     
+    // Sincronizar color picker con input HEX
     window.syncHex = function(colorInput, hexInputId) {
       document.getElementById(hexInputId).value = colorInput.value.toUpperCase();
     }
     
     window.syncColor = function(hexInput, colorInputId) {
       let hex = hexInput.value.trim();
+      
+      // Agregar # si no lo tiene
       if (hex && !hex.startsWith('#')) {
         hex = '#' + hex;
       }
+      
+      // Validar formato HEX
       if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
         document.getElementById(colorInputId).value = hex;
         hexInput.value = hex.toUpperCase();
@@ -728,28 +773,46 @@
     
     window.openSecretMenu = function() {
       const menu = document.getElementById('secretMenu');
+      
+      // Cargar valores actuales en el formulario
       const settings = loadSettings();
       
+      // Número forzado
       document.getElementById('forcedNumber').value = settings.forcedNumber || '';
+      
+      // Colores con HEX
       document.getElementById('numBgColor').value = settings.numBgColor;
       document.getElementById('numBgHex').value = settings.numBgColor.toUpperCase();
+      
       document.getElementById('specialBgColor').value = settings.specialBgColor;
       document.getElementById('specialBgHex').value = settings.specialBgColor.toUpperCase();
+      
       document.getElementById('equalBgColor').value = settings.equalBgColor;
       document.getElementById('equalBgHex').value = settings.equalBgColor.toUpperCase();
+      
       document.getElementById('bgColor').value = settings.bgColor;
       document.getElementById('bgColorHex').value = settings.bgColor.toUpperCase();
+      
       document.getElementById('fontColor').value = settings.fontColor;
       document.getElementById('fontColorHex').value = settings.fontColor.toUpperCase();
+      
+      // Fuente y tamaños
       document.getElementById('fontFamily').value = settings.fontFamily;
       document.getElementById('fontSize').value = settings.fontSizePercent;
       document.getElementById('fontSizeValue').textContent = settings.fontSizePercent + '%';
+      
       document.getElementById('btnFontSize').value = settings.btnFontSizePercent;
       document.getElementById('btnFontSizeValue').textContent = settings.btnFontSizePercent + '%';
+      
+      // Opacidad del engranaje
       document.getElementById('settingsOpacity').value = settings.settingsOpacity;
       document.getElementById('settingsOpacityValue').textContent = settings.settingsOpacity + '%';
+      
+      // Opacidad del indicador
       document.getElementById('indicatorOpacity').value = settings.indicatorOpacity;
       document.getElementById('indicatorOpacityValue').textContent = settings.indicatorOpacity + '%';
+      
+      // Tamaño del indicador
       document.getElementById('indicatorSize').value = settings.indicatorSize;
       document.getElementById('indicatorSizeValue').textContent = settings.indicatorSize + 'px';
       
@@ -762,6 +825,7 @@
     
     window.saveSettings = function() {
       const forcedValue = document.getElementById('forcedNumber').value;
+      
       const settings = {
         forcedNumber: forcedValue,
         numBgColor: document.getElementById('numBgColor').value,
@@ -779,10 +843,13 @@
       
       localStorage.setItem('calcSettings', JSON.stringify(settings));
       
+      // CRÍTICO: Actualizar el número forzado globalmente
       if (forcedValue && forcedValue.trim() !== '') {
         window.forced = parseFloat(forcedValue);
+        console.log('✅ Número forzado establecido:', window.forced);
       } else {
         window.forced = null;
+        console.log('❌ Número forzado eliminado');
       }
       
       applySettings(settings);
@@ -792,7 +859,9 @@
     
     window.resetSettings = function() {
       if (!confirm('¿Restaurar configuración por defecto?')) return;
+      
       localStorage.removeItem('calcSettings');
+      
       const defaults = {
         forcedNumber: '',
         numBgColor: '#fbd9d7',
@@ -807,6 +876,7 @@
         indicatorOpacity: '40',
         indicatorSize: '8'
       };
+      
       applySettings(defaults);
       window.forced = null;
       closeSecretMenu();
@@ -815,7 +885,11 @@
     
     function loadSettings() {
       const saved = localStorage.getItem('calcSettings');
-      if (saved) return JSON.parse(saved);
+      
+      if (saved) {
+        return JSON.parse(saved);
+      }
+      
       return {
         forcedNumber: '',
         numBgColor: '#fbd9d7',
@@ -834,6 +908,8 @@
     
     function applySettings(settings) {
       const root = document.documentElement;
+      
+      // Colores
       root.style.setProperty('--num-bg', settings.numBgColor);
       root.style.setProperty('--num-active', adjustBrightness(settings.numBgColor, -10));
       root.style.setProperty('--special-bg', settings.specialBgColor);
@@ -842,22 +918,32 @@
       root.style.setProperty('--equal-active', adjustBrightness(settings.equalBgColor, 15));
       root.style.setProperty('--bg-color', settings.bgColor);
       root.style.setProperty('--font-color', settings.fontColor);
+      
+      // Fuente
       root.style.setProperty('--font-family', settings.fontFamily);
       
+      // Tamaño de fuente del display
       const baseFontSize = 13.1;
       const baseResultSize = 6.9;
       const multiplier = settings.fontSizePercent / 100;
+      
       root.style.setProperty('--font-size', (baseFontSize * multiplier) + 'vw');
       root.style.setProperty('--result-font-size', (baseResultSize * multiplier) + 'vw');
       
+      // Tamaño de fuente de los botones
       const baseBtnSize = 7.1;
       const btnMultiplier = settings.btnFontSizePercent / 100;
       root.style.setProperty('--btn-font-size', (baseBtnSize * btnMultiplier) + 'vw');
       
+      // Opacidad del botón de configuración
       const opacity = settings.settingsOpacity / 100;
       root.style.setProperty('--settings-opacity', opacity);
+      
+      // Opacidad del indicador de dígitos
       const indicatorOpacity = settings.indicatorOpacity / 100;
       root.style.setProperty('--indicator-opacity', indicatorOpacity);
+      
+      // Tamaño del indicador
       root.style.setProperty('--indicator-size', settings.indicatorSize + 'px');
     }
     
@@ -872,78 +958,140 @@
         .toString(16).slice(1);
     }
 
+    // ================================================
+    // VALIDACIÓN DE SESIÓN AL CARGAR
+    // ================================================
     async function initApp() {
       const loadingEl = document.getElementById('loading');
       const calculatorEl = document.getElementById('calculatorApp');
 
       try {
         const result = await validateSession();
-        if (result.valid || result.no_internet) {
+
+        if (result.valid) {
+          // ✅ Sesión válida - cargar calculadora
+          console.log('✅ Sesión válida');
           loadingEl.classList.add('hidden');
           calculatorEl.classList.add('visible');
           
+          // Cargar y aplicar configuración guardada
           const settings = loadSettings();
           applySettings(settings);
           
+          // CRÍTICO: Cargar número forzado si existe
           if (settings.forcedNumber && settings.forcedNumber.trim() !== '') {
             window.forced = parseFloat(settings.forcedNumber);
+            console.log('✅ Número forzado cargado al inicio:', window.forced);
+          } else {
+            window.forced = null;
+            console.log('ℹ️ No hay número forzado configurado');
+          }
+          
+          // Mostrar banner de instalación si aplica
+          setTimeout(() => {
+            if (deferredPrompt) {
+              showInstallBanner();
+            }
+          }, 1000);
+          
+        } else if (result.error === "revoked") {
+          // ❌ Acceso revocado - redirigir
+          console.log('❌ Acceso revocado');
+          window.location.href = "../fenix.html";
+          
+        } else if (result.no_internet) {
+          // ⚠️ Sin internet pero con sesión previa válida
+          console.log('⚠️ Sin internet - usando caché');
+          loadingEl.classList.add('hidden');
+          calculatorEl.classList.add('visible');
+          
+          // Cargar configuración guardada
+          const settings = loadSettings();
+          applySettings(settings);
+          if (settings.forcedNumber && settings.forcedNumber.trim() !== '') {
+            window.forced = parseFloat(settings.forcedNumber);
+            console.log('✅ Número forzado cargado (offline):', window.forced);
           } else {
             window.forced = null;
           }
           
-          setTimeout(() => {
-            if (deferredPrompt) showInstallBanner();
-          }, 1000);
-          
-        } else if (result.error === "revoked") {
-          window.location.href = "../fenix.html";
         } else {
+          // ❌ Sin sesión - redirigir a inicio
+          console.log('❌ Sin sesión válida');
           alert('No tienes acceso. Necesitas un código de activación.');
           window.location.href = "../";
         }
       } catch (error) {
+        console.error('Error al validar sesión:', error);
         loadingEl.classList.add('hidden');
         alert('Error al validar tu sesión. Intenta de nuevo.');
       }
     }
 
+    // ================================================
+    // REGISTRO DEL SERVICE WORKER
+    // ================================================
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('../sw.js')
         .then(reg => console.log('✅ Service Worker registrado'))
         .catch(err => console.error('❌ Error al registrar SW:', err));
     }
 
+    // ================================================
+    // INICIAR APP
+    // ================================================
     initApp();
   </script>
 
+  <!-- Calculator Logic -->
   <script>
     let operation = document.getElementById("operation");
     let result = document.getElementById("result");
     let currentOperation = "";
     let trapMode = false;
     let trapLocked = false;
-    window.forced = null;  
+    window.forced = null;  // ← CAMBIO: ahora es global
     let partialVisible = false;
     let lastOperation = "";
     let lastPartialVisible = false;
     let lastResultText = "";
     let justCalculated = false;
     
+    // Actualizar indicador de dígitos
     function updateDigitIndicator() {
+      // Ocultar todos los indicadores
       for (let i = 1; i <= 9; i++) {
         const indicator = document.getElementById(`indicator-${i}`);
         if (indicator) indicator.classList.remove('show');
       }
       
+      // Si hay un número forzado configurado
       if (window.forced !== null && window.forced !== undefined) {
         const currentValue = eval(currentOperation.replace(/\+$/, "")) || 0;
         const needed = window.forced - currentValue;
         const digits = Math.abs(needed).toString().replace('.', '').length;
         
+        console.log('🎯 Indicador Debug:', {
+          forzado: window.forced,
+          actual: currentValue,
+          necesita: needed,
+          digitos: digits
+        });
+        
+        // Mostrar indicador en el botón correspondiente (1-9)
         if (digits >= 1 && digits <= 9) {
           const indicator = document.getElementById(`indicator-${digits}`);
-          if (indicator) indicator.classList.add('show');
+          if (indicator) {
+            indicator.classList.add('show');
+            console.log(`✅ Mostrando indicador en botón ${digits}`);
+          } else {
+            console.log(`❌ No se encontró indicador-${digits}`);
+          }
+        } else {
+          console.log(`⚠️ El número tiene ${digits} dígitos (fuera de rango 1-9)`);
         }
+      } else {
+        console.log('❌ No hay número forzado configurado');
       }
     }
     
@@ -968,64 +1116,60 @@
     
     function appendNumber(num) {
       if (trapLocked) return;
-      
-      // MODO TRAMPA ACTIVO: Intercepta el número presionado y calcula el valor necesario
       if (trapMode) {
-        if (window.forced !== null && window.forced !== undefined) {
-          let actual = eval(currentOperation.replace(/\+$/, "")) || 0;
-          let needed = window.forced - actual;
-          currentOperation += needed;
-          partialVisible = true;
-          updateDisplay();
-          trapLocked = true; // Bloquea más entradas hasta presionar '='
-        } else {
-          result.textContent = "⚠ No forzado";
-        }
+        showTrapResult();
         return;
       }
-      
+      // Si acaba de calcular, limpiar la expresión al empezar de nuevo
       if (justCalculated) {
-        currentOperation = "";
-        justCalculated = false;
+        const expressionEl = document.getElementById("expression");
+        if (expressionEl) expressionEl.textContent = "";
       }
-      
       let prevChar = currentOperation.slice(-1);
       currentOperation += num;
       if (prevChar === '+' && !partialVisible) {
         partialVisible = true;
       }
+      justCalculated = false;
       updateDisplay();
+      
+      // Actualizar indicador si estamos en modo trap
+      if (trapMode) {
+        updateDigitIndicator();
+      }
     }
     
     function appendDot() {
       if (trapLocked) return;
-      if (justCalculated) {
-        currentOperation = "0";
-        justCalculated = false;
-      }
       currentOperation += ".";
+      justCalculated = false;
       updateDisplay();
     }
     
     function add() {
       if (trapLocked) return;
-      if (justCalculated) {
-        justCalculated = false;
-      }
       currentOperation += "+";
+      justCalculated = false;
       updateDisplay();
     }
     
     function clearDisplay() {
       if (trapLocked) return;
-      if (trapMode) return;
+      
+      // Si está en modo trap (después de presionar -), no limpiar
+      if (trapMode) {
+        return;
+      }
       
       currentOperation = "";
       result.textContent = "";
       partialVisible = false;
       justCalculated = false;
+      const expressionEl = document.getElementById("expression");
+      if (expressionEl) expressionEl.textContent = "";
       updateDisplay();
       
+      // Ocultar indicadores
       for (let i = 1; i <= 9; i++) {
         const indicator = document.getElementById(`indicator-${i}`);
         if (indicator) indicator.classList.remove('show');
@@ -1046,48 +1190,71 @@
       updateDisplay();
     }
     
-    function forceNumber() {}
+    // Función no utilizada (el menú se abre solo con el engranaje)
+    function forceNumber() {
+      // Vacía - ya no se usa
+    }
     
     function activateTrap() {
       if (trapLocked) return;
-      if (justCalculated) {
-        justCalculated = false;
-      }
       trapMode = true;
-      currentOperation += "+"; // Convierte el signo menos (-) en un más oculto
+      currentOperation += "+";
+      justCalculated = false;
       updateDisplay();
-      updateDigitIndicator();  
+      updateDigitIndicator();  // Mostrar indicador
+    }
+    
+    function showTrapResult() {
+      let actual = eval(currentOperation.replace(/\+$/, "")) || 0;
+      if (window.forced !== null && window.forced !== undefined) {
+        let needed = window.forced - actual;
+        currentOperation += needed;
+        updateDisplay();
+        trapLocked = true;
+      } else {
+        result.textContent = "⚠ No forzado";
+      }
     }
     
     function calculate() {
       try {
         let calcResult = eval(currentOperation);
-        
         lastOperation = currentOperation;
         lastPartialVisible = partialVisible;
         lastResultText = result.textContent;
         
-        // Renderizado simulando el mockup exacto
-        if (trapMode || trapLocked) {
-          operation.textContent = currentOperation; // Muestra la suma extendida completa arriba
-          result.textContent = Number(window.forced).toLocaleString("es-CO"); // El número final deseado abajo
+        const expressionEl = document.getElementById("expression");
+        
+        if (trapMode) {
+          // Guardar la expresión completa (incluyendo el número añadido por trap)
+          let actual = eval(currentOperation.replace(/\+$/, "")) || 0;
+          let needed = window.forced - actual;
+          let fullExpr = currentOperation.replace(/\+$/, "") + "+" + needed;
+          expressionEl.textContent = fullExpr;
+          
+          operation.textContent = Number(window.forced).toLocaleString("es-CO");
+          result.textContent = "";
           currentOperation = window.forced.toString();
         } else {
+          // Guardar la expresión que llevó al resultado
+          expressionEl.textContent = currentOperation;
+          
           result.textContent = Number(calcResult).toLocaleString("es-CO");
-          operation.textContent = currentOperation;
+          operation.textContent = result.textContent;
           currentOperation = calcResult.toString();
         }
-        
         trapMode = false;
         trapLocked = false;
         partialVisible = false;
         justCalculated = true;
         
+        // Ocultar indicadores
         for (let i = 1; i <= 9; i++) {
           const indicator = document.getElementById(`indicator-${i}`);
           if (indicator) indicator.classList.remove('show');
         }
         
+        updateDisplay();
       } catch {
         result.textContent = "Error";
       }
