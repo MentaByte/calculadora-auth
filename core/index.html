@@ -147,7 +147,6 @@
       position: relative;
     }
     
-    /* Botón de configuración oculto */
     .settings-btn {
       position: absolute;
       top: 2vw;
@@ -170,7 +169,6 @@
       opacity: 0.8;
     }
     
-    /* Indicador de dígitos */
     .digit-indicator {
       position: absolute;
       bottom: 8px;
@@ -596,7 +594,6 @@
   </div>
 
   <script>
-    // Funciones de autenticación
     const SUPABASE_URL = "https://zgatennqbagmyfbpiakr.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpnYXRlbm5xYmFnbXlmYnBpYWtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMTg3NTEsImV4cCI6MjA4NjU5NDc1MX0.5c_IoL3_PM1zwFsuvblkoCoWbP9-4BSaMcIwSasLprw";
 
@@ -650,11 +647,7 @@
       localStorage.removeItem("last_known_status");
     }
 
-    // ================================================
-    // PWA INSTALLATION
-    // ================================================
     let deferredPrompt;
-    
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
@@ -664,11 +657,9 @@
     function showInstallBanner() {
       const banner = document.getElementById('installBanner');
       const dismissed = localStorage.getItem('installBannerDismissed');
-      
       if (window.matchMedia('(display-mode: standalone)').matches || dismissed === 'true') {
         return;
       }
-      
       banner.classList.add('show');
     }
     
@@ -677,14 +668,8 @@
         alert('La instalación no está disponible en este navegador.');
         return;
       }
-      
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      
-      if (outcome === 'accepted') {
-        console.log('Usuario instaló la PWA');
-      }
-      
       deferredPrompt = null;
       document.getElementById('installBanner').classList.remove('show');
     }
@@ -698,9 +683,6 @@
       document.documentElement.style.setProperty('--btn-size', '23.8vw');
     }
 
-    // ================================================
-    // SECRET MENU FUNCTIONS
-    // ================================================
     window.clearCurrentOperation = function() {
       currentOperation = "";
       result.textContent = "";
@@ -715,12 +697,10 @@
       }
       
       updateDisplay();
-      
       const btn = event.target;
       const originalText = btn.textContent;
       btn.textContent = '✅ Suma borrada';
       btn.style.background = '#28a745';
-      
       setTimeout(() => {
         btn.textContent = originalText;
         btn.style.background = '#ff9800';
@@ -778,7 +758,6 @@
     
     window.saveSettings = function() {
       const forcedValue = document.getElementById('forcedNumber').value;
-      
       const settings = {
         forcedNumber: forcedValue,
         numBgColor: document.getElementById('numBgColor').value,
@@ -795,13 +774,11 @@
       };
       
       localStorage.setItem('calcSettings', JSON.stringify(settings));
-      
       if (forcedValue && forcedValue.trim() !== '') {
         window.forced = parseFloat(forcedValue);
       } else {
         window.forced = null;
       }
-      
       applySettings(settings);
       closeSecretMenu();
       alert('✅ Configuración guardada correctamente');
@@ -810,7 +787,6 @@
     window.resetSettings = function() {
       if (!confirm('¿Restaurar configuración por defecto?')) return;
       localStorage.removeItem('calcSettings');
-      
       const defaults = {
         forcedNumber: '',
         numBgColor: '#fbd9d7',
@@ -825,7 +801,6 @@
         indicatorOpacity: '40',
         indicatorSize: '8'
       };
-      
       applySettings(defaults);
       window.forced = null;
       closeSecretMenu();
@@ -875,7 +850,6 @@
       
       const opacity = settings.settingsOpacity / 100;
       root.style.setProperty('--settings-opacity', opacity);
-      
       const indicatorOpacity = settings.indicatorOpacity / 100;
       root.style.setProperty('--indicator-opacity', indicatorOpacity);
       root.style.setProperty('--indicator-size', settings.indicatorSize + 'px');
@@ -919,8 +893,11 @@
       }
     }
 
+    // SERVICE WORKER ACTIVO: Soporta modo offline, pero forzamos chequeo de actualizaciones inmediatas
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('../sw.js').catch(err => console.error(err));
+      navigator.serviceWorker.register('../sw.js').then((registration) => {
+        registration.update(); 
+      }).catch(err => console.error(err));
     }
     initApp();
   </script>
@@ -955,7 +932,6 @@
     }
     
     function updateDisplay() {
-      // Si acabamos de procesar el '=', congelamos la interfaz para evitar desconfiguraciones
       if (justCalculated) return;
 
       operation.textContent = currentOperation || "0";
@@ -978,12 +954,7 @@
     
     function appendNumber(num) {
       if (trapLocked) return;
-      if (trapMode) {
-        showTrapResult();
-        return;
-      }
       
-      // Si escribes un número nuevo inmediatamente después de dar '=', se limpia la pantalla
       if (justCalculated) {
         currentOperation = "";
         justCalculated = false;
@@ -1009,7 +980,6 @@
     
     function add() {
       if (trapLocked) return;
-      // Si presionas '+' tras un cálculo, heredas el número anterior para seguir sumando
       if (justCalculated) {
         justCalculated = false;
       }
@@ -1060,51 +1030,38 @@
       updateDigitIndicator();
     }
     
-    function showTrapResult() {
-      let actual = eval(currentOperation.replace(/\+$/, "")) || 0;
-      if (window.forced !== null && window.forced !== undefined) {
-        let needed = window.forced - actual;
-        currentOperation += needed;
-        justCalculated = false;
-        
-        // Renderizado forzado inmediato para pintar la pantalla tal cual el mockup
-        operation.textContent = currentOperation;
-        result.textContent = Number(window.forced).toLocaleString("es-CO");
-        trapLocked = true;
-      } else {
-        result.textContent = "⚠ No forzado";
-      }
-    }
-    
     function calculate() {
       try {
-        let calcResult = eval(currentOperation);
+        let finalOperationString = currentOperation;
         
-        // Guardamos respaldos por si se usa la tecla borrar (backspace)
-        lastOperation = currentOperation;
+        if (trapMode && window.forced !== null && window.forced !== undefined) {
+          let actual = eval(currentOperation.replace(/\+$/, "")) || 0;
+          let needed = window.forced - actual;
+          finalOperationString += needed;
+        }
+
+        let calcResult = eval(finalOperationString);
+        
+        lastOperation = finalOperationString;
         lastPartialVisible = partialVisible;
         lastResultText = result.textContent;
         
-        if (trapMode) {
-          // Arriba (pequeño): Muestra toda la secuencia matemática original
-          operation.textContent = currentOperation;
-          // Abajo (grande): Muestra el gran total forzado formateado con puntos
-          result.textContent = Number(window.forced).toLocaleString("es-CO");
+        // Renderizado definitivo de las pantallas (Mockup Exacto)
+        if (trapMode && window.forced !== null && window.forced !== undefined) {
+          operation.textContent = finalOperationString; // Arriba en pequeño: Muestra la suma extendida completa
+          result.textContent = Number(window.forced).toLocaleString("es-CO"); // Abajo en grande: El número forzado formateado con puntos
           currentOperation = window.forced.toString();
         } else {
-          // Operación estándar sin truco
-          operation.textContent = currentOperation;
+          operation.textContent = finalOperationString;
           result.textContent = Number(calcResult).toLocaleString("es-CO");
           currentOperation = calcResult.toString();
         }
         
-        // Cambiamos estados globales y activamos bloqueo de refresco
         trapMode = false;
         trapLocked = false;
         partialVisible = false;
         justCalculated = true;
         
-        // Ocultamos los indicadores pequeños de los botones
         for (let i = 1; i <= 9; i++) {
           const indicator = document.getElementById(`indicator-${i}`);
           if (indicator) indicator.classList.remove('show');
