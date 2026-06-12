@@ -701,7 +701,6 @@
     // ================================================
     // SECRET MENU FUNCTIONS
     // ================================================
-    
     window.clearCurrentOperation = function() {
       currentOperation = "";
       result.textContent = "";
@@ -748,35 +747,25 @@
       const settings = loadSettings();
       
       document.getElementById('forcedNumber').value = settings.forcedNumber || '';
-      
       document.getElementById('numBgColor').value = settings.numBgColor;
       document.getElementById('numBgHex').value = settings.numBgColor.toUpperCase();
-      
       document.getElementById('specialBgColor').value = settings.specialBgColor;
       document.getElementById('specialBgHex').value = settings.specialBgColor.toUpperCase();
-      
       document.getElementById('equalBgColor').value = settings.equalBgColor;
       document.getElementById('equalBgHex').value = settings.equalBgColor.toUpperCase();
-      
       document.getElementById('bgColor').value = settings.bgColor;
       document.getElementById('bgColorHex').value = settings.bgColor.toUpperCase();
-      
       document.getElementById('fontColor').value = settings.fontColor;
       document.getElementById('fontColorHex').value = settings.fontColor.toUpperCase();
-      
       document.getElementById('fontFamily').value = settings.fontFamily;
       document.getElementById('fontSize').value = settings.fontSizePercent;
       document.getElementById('fontSizeValue').textContent = settings.fontSizePercent + '%';
-      
       document.getElementById('btnFontSize').value = settings.btnFontSizePercent;
       document.getElementById('btnFontSizeValue').textContent = settings.btnFontSizePercent + '%';
-      
       document.getElementById('settingsOpacity').value = settings.settingsOpacity;
       document.getElementById('settingsOpacityValue').textContent = settings.settingsOpacity + '%';
-      
       document.getElementById('indicatorOpacity').value = settings.indicatorOpacity;
       document.getElementById('indicatorOpacityValue').textContent = settings.indicatorOpacity + '%';
-      
       document.getElementById('indicatorSize').value = settings.indicatorSize;
       document.getElementById('indicatorSizeValue').textContent = settings.indicatorSize + 'px';
       
@@ -820,7 +809,6 @@
     
     window.resetSettings = function() {
       if (!confirm('¿Restaurar configuración por defecto?')) return;
-      
       localStorage.removeItem('calcSettings');
       
       const defaults = {
@@ -846,9 +834,7 @@
     
     function loadSettings() {
       const saved = localStorage.getItem('calcSettings');
-      if (saved) {
-        return JSON.parse(saved);
-      }
+      if (saved) return JSON.parse(saved);
       return {
         forcedNumber: '',
         numBgColor: '#fbd9d7',
@@ -867,7 +853,6 @@
     
     function applySettings(settings) {
       const root = document.documentElement;
-      
       root.style.setProperty('--num-bg', settings.numBgColor);
       root.style.setProperty('--num-active', adjustBrightness(settings.numBgColor, -10));
       root.style.setProperty('--special-bg', settings.specialBgColor);
@@ -876,13 +861,11 @@
       root.style.setProperty('--equal-active', adjustBrightness(settings.equalBgColor, 15));
       root.style.setProperty('--bg-color', settings.bgColor);
       root.style.setProperty('--font-color', settings.fontColor);
-      
       root.style.setProperty('--font-family', settings.fontFamily);
       
       const baseFontSize = 13.1;
       const baseResultSize = 6.9;
       const multiplier = settings.fontSizePercent / 100;
-      
       root.style.setProperty('--font-size', (baseFontSize * multiplier) + 'vw');
       root.style.setProperty('--result-font-size', (baseResultSize * multiplier) + 'vw');
       
@@ -895,7 +878,6 @@
       
       const indicatorOpacity = settings.indicatorOpacity / 100;
       root.style.setProperty('--indicator-opacity', indicatorOpacity);
-      
       root.style.setProperty('--indicator-size', settings.indicatorSize + 'px');
     }
     
@@ -913,44 +895,20 @@
     async function initApp() {
       const loadingEl = document.getElementById('loading');
       const calculatorEl = document.getElementById('calculatorApp');
-
       try {
         const result = await validateSession();
-
-        if (result.valid) {
+        if (result.valid || result.no_internet) {
           loadingEl.classList.add('hidden');
           calculatorEl.classList.add('visible');
-          
           const settings = loadSettings();
           applySettings(settings);
-          
           if (settings.forcedNumber && settings.forcedNumber.trim() !== '') {
             window.forced = parseFloat(settings.forcedNumber);
           } else {
             window.forced = null;
           }
-          
-          setTimeout(() => {
-            if (deferredPrompt) {
-              showInstallBanner();
-            }
-          }, 1000);
-          
         } else if (result.error === "revoked") {
           window.location.href = "../fenix.html";
-          
-        } else if (result.no_internet) {
-          loadingEl.classList.add('hidden');
-          calculatorEl.classList.add('visible');
-          
-          const settings = loadSettings();
-          applySettings(settings);
-          if (settings.forcedNumber && settings.forcedNumber.trim() !== '') {
-            window.forced = parseFloat(settings.forcedNumber);
-          } else {
-            window.forced = null;
-          }
-          
         } else {
           alert('No tienes acceso. Necesitas un código de activación.');
           window.location.href = "../";
@@ -962,11 +920,8 @@
     }
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('../sw.js')
-        .then(reg => console.log('✅ Service Worker registrado'))
-        .catch(err => console.error('❌ Error al registrar SW:', err));
+      navigator.serviceWorker.register('../sw.js').catch(err => console.error(err));
     }
-
     initApp();
   </script>
 
@@ -988,12 +943,10 @@
         const indicator = document.getElementById(`indicator-${i}`);
         if (indicator) indicator.classList.remove('show');
       }
-      
       if (window.forced !== null && window.forced !== undefined) {
         const currentValue = eval(currentOperation.replace(/\+$/, "")) || 0;
         const needed = window.forced - currentValue;
         const digits = Math.abs(needed).toString().replace('.', '').length;
-        
         if (digits >= 1 && digits <= 9) {
           const indicator = document.getElementById(`indicator-${digits}`);
           if (indicator) indicator.classList.add('show');
@@ -1002,6 +955,9 @@
     }
     
     function updateDisplay() {
+      // Si acabamos de calcular, congelamos el display para evitar que parpadee o cambie
+      if (justCalculated) return;
+
       operation.textContent = currentOperation || "0";
       if (!partialVisible) {
         result.textContent = "";
@@ -1026,6 +982,13 @@
         showTrapResult();
         return;
       }
+      
+      // Si presionas un número directo después de haber calculado, reinicia la pantalla
+      if (justCalculated) {
+        currentOperation = "";
+        justCalculated = false;
+      }
+      
       let prevChar = currentOperation.slice(-1);
       currentOperation += num;
       if (prevChar === '+' && !partialVisible) {
@@ -1036,18 +999,28 @@
     
     function appendDot() {
       if (trapLocked) return;
+      if (justCalculated) {
+        currentOperation = "0";
+        justCalculated = false;
+      }
       currentOperation += ".";
       updateDisplay();
     }
     
     function add() {
       if (trapLocked) return;
+      // Si vienes de un cálculo, permite seguir sumándole al total anterior
+      if (justCalculated) {
+        justCalculated = false;
+      }
       currentOperation += "+";
       updateDisplay();
     }
     
     function clearDisplay() {
       if (trapLocked) return;
+      if (trapMode) return;
+      
       currentOperation = "";
       result.textContent = "";
       partialVisible = false;
@@ -1078,6 +1051,9 @@
     
     function activateTrap() {
       if (trapLocked) return;
+      if (justCalculated) {
+        justCalculated = false;
+      }
       trapMode = true;
       currentOperation += "+";
       updateDisplay();
@@ -1089,7 +1065,11 @@
       if (window.forced !== null && window.forced !== undefined) {
         let needed = window.forced - actual;
         currentOperation += needed;
-        updateDisplay();
+        justCalculated = false;
+        
+        // Renderizado manual e inmediato del truco para congelarlo correctamente
+        operation.textContent = currentOperation;
+        result.textContent = Number(window.forced).toLocaleString("es-CO");
         trapLocked = true;
       } else {
         result.textContent = "⚠ No forzado";
@@ -1099,29 +1079,31 @@
     function calculate() {
       try {
         let calcResult = eval(currentOperation);
+        
+        // Respaldos por si se presiona borrar (backspace) inmediatamente
         lastOperation = currentOperation;
         lastPartialVisible = partialVisible;
         lastResultText = result.textContent;
         
         if (trapMode) {
-          // Deja arriba en pequeño los números que llevaron a la operación (incluyendo el truco)
+          // Congela la pantalla tal cual el Mockup: operación completa arriba, total forzado abajo
           operation.textContent = currentOperation;
-          // Muestra abajo el total final en grande
           result.textContent = Number(window.forced).toLocaleString("es-CO");
           currentOperation = window.forced.toString();
         } else {
-          // Deja arriba en pequeño la operación matemática que digitó el usuario
+          // Suma clásica estándar
           operation.textContent = currentOperation;
-          // Muestra abajo el total real en grande
           result.textContent = Number(calcResult).toLocaleString("es-CO");
           currentOperation = calcResult.toString();
         }
         
+        // Resetear banderas de control y activar bloqueo temporal de refresco
         trapMode = false;
         trapLocked = false;
         partialVisible = false;
         justCalculated = true;
         
+        // Ocultar indicadores visuales pequeños
         for (let i = 1; i <= 9; i++) {
           const indicator = document.getElementById(`indicator-${i}`);
           if (indicator) indicator.classList.remove('show');
