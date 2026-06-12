@@ -1130,7 +1130,7 @@
     }
     
     function appendNumber(num) {
-      if (trapLocked) return;
+      if (trapLocked || justCalculated) return;
       if (trapMode) {
         showTrapResult();
         return;
@@ -1150,21 +1150,21 @@
     }
     
     function appendDot() {
-      if (trapLocked) return;
+      if (trapLocked || justCalculated) return;
       currentOperation += ".";
       justCalculated = false;
       updateDisplay();
     }
     
     function add() {
-      if (trapLocked) return;
+      if (trapLocked || justCalculated) return;
       currentOperation += "+";
       justCalculated = false;
       updateDisplay();
     }
     
     function clearDisplay() {
-      if (trapLocked) return;
+      if (trapLocked || justCalculated) return;
       
       // Si está en modo trap (después de presionar -), no limpiar
       if (trapMode) {
@@ -1185,7 +1185,7 @@
     }
     
     function backspace() {
-      if (trapLocked) return;
+      if (trapLocked || justCalculated) return;
       if (justCalculated) {
         currentOperation = lastOperation;
         partialVisible = lastPartialVisible;
@@ -1204,7 +1204,7 @@
     }
     
     function activateTrap() {
-      if (trapLocked) return;
+      if (trapLocked || justCalculated) return;
       trapMode = true;
       currentOperation += "+";
       justCalculated = false;
