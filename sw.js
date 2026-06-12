@@ -3,7 +3,7 @@
    Estrategia: Cache First con fallback a red
    =============================================== */
 
-const CACHE_NAME = 'calculadora-v1.5'; //optimizacion para safari
+const CACHE_NAME = 'calculadora-v1.6'; //optimizacion para safari
 
 const BASE = self.location.pathname.replace(/sw\.js$/, '');
 
@@ -145,5 +145,8 @@ self.addEventListener('fetch', event => {
 self.addEventListener('message', event => {
   if (event.data?.type === 'SKIP_WAITING') {
     self.skipWaiting();
+  }
+  if (event.data?.type === 'GET_VERSION') {
+    event.source.postMessage({ type: 'SW_VERSION', version: CACHE_NAME });
   }
 });
