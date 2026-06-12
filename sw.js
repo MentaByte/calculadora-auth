@@ -3,7 +3,7 @@
    Estrategia: Cache First con fallback a red
    =============================================== */
 
-const CACHE_NAME = 'calculadora-v1.6'; //optimizacion para safari
+const CACHE_NAME = 'calculadora-v1.61'; //optimizacion para safari
 
 const BASE = self.location.pathname.replace(/sw\.js$/, '');
 
