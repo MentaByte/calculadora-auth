@@ -578,6 +578,9 @@
         <button class="btn-save" onclick="saveSettings()">💾 Guardar</button>
         <button class="btn-reset" onclick="resetSettings()">🔄 Restaurar</button>
       </div>
+      <p style="text-align:center; color:#bbb; font-size:11px; margin-top:15px; margin-bottom:0;">
+        <span id="swVersion">...</span>
+      </p>
     </div>
   </div>
 
@@ -817,6 +820,11 @@
       document.getElementById('indicatorSizeValue').textContent = settings.indicatorSize + 'px';
       
       menu.classList.add('show');
+      
+      // Pedir versión al SW
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' });
+      }
     }
     
     window.closeSecretMenu = function() {
@@ -1035,6 +1043,13 @@
       navigator.serviceWorker.register('../sw.js')
         .then(reg => console.log('✅ Service Worker registrado'))
         .catch(err => console.error('❌ Error al registrar SW:', err));
+      
+      navigator.serviceWorker.addEventListener('message', event => {
+        if (event.data?.type === 'SW_VERSION') {
+          const el = document.getElementById('swVersion');
+          if (el) el.textContent = event.data.version;
+        }
+      });
     }
 
     // ================================================
@@ -1120,11 +1135,6 @@
         showTrapResult();
         return;
       }
-      // Si acaba de calcular, limpiar la expresión al empezar de nuevo
-      if (justCalculated) {
-        const expressionEl = document.getElementById("expression");
-        if (expressionEl) expressionEl.textContent = "";
-      }
       let prevChar = currentOperation.slice(-1);
       currentOperation += num;
       if (prevChar === '+' && !partialVisible) {
@@ -1165,8 +1175,6 @@
       result.textContent = "";
       partialVisible = false;
       justCalculated = false;
-      const expressionEl = document.getElementById("expression");
-      if (expressionEl) expressionEl.textContent = "";
       updateDisplay();
       
       // Ocultar indicadores
@@ -1218,6 +1226,9 @@
     
     function calculate() {
       try {
+        // Si ya calculó y vuelve a presionar =, no hacer nada
+        if (justCalculated) return;
+        
         let calcResult = eval(currentOperation);
         lastOperation = currentOperation;
         lastPartialVisible = partialVisible;
@@ -1226,11 +1237,9 @@
         const expressionEl = document.getElementById("expression");
         
         if (trapMode) {
-          // Guardar la expresión completa (incluyendo el número añadido por trap)
-          let actual = eval(currentOperation.replace(/\+$/, "")) || 0;
-          let needed = window.forced - actual;
-          let fullExpr = currentOperation.replace(/\+$/, "") + "+" + needed;
-          expressionEl.textContent = fullExpr;
+          // La expresión ya tiene el +número añadido por showTrapResult, solo limpiar +0 si existe
+          let expr = currentOperation.replace(/\+0$/, "");
+          expressionEl.textContent = expr;
           
           operation.textContent = Number(window.forced).toLocaleString("es-CO");
           result.textContent = "";
