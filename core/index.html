@@ -594,6 +594,7 @@
   </div>
 
   <script>
+    // Funciones de autenticación
     const SUPABASE_URL = "https://zgatennqbagmyfbpiakr.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpnYXRlbm5xYmFnbXlmYnBpYWtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMTg3NTEsImV4cCI6MjA4NjU5NDc1MX0.5c_IoL3_PM1zwFsuvblkoCoWbP9-4BSaMcIwSasLprw";
 
@@ -647,6 +648,7 @@
       localStorage.removeItem("last_known_status");
     }
 
+    // PWA INSTALLATION
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
@@ -669,7 +671,7 @@
         return;
       }
       deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
+      await deferredPrompt.userChoice;
       deferredPrompt = null;
       document.getElementById('installBanner').classList.remove('show');
     }
@@ -683,6 +685,7 @@
       document.documentElement.style.setProperty('--btn-size', '23.8vw');
     }
 
+    // SECRET MENU FUNCTIONS
     window.clearCurrentOperation = function() {
       currentOperation = "";
       result.textContent = "";
@@ -701,6 +704,7 @@
       const originalText = btn.textContent;
       btn.textContent = '✅ Suma borrada';
       btn.style.background = '#28a745';
+      
       setTimeout(() => {
         btn.textContent = originalText;
         btn.style.background = '#ff9800';
@@ -774,11 +778,13 @@
       };
       
       localStorage.setItem('calcSettings', JSON.stringify(settings));
+      
       if (forcedValue && forcedValue.trim() !== '') {
         window.forced = parseFloat(forcedValue);
       } else {
         window.forced = null;
       }
+      
       applySettings(settings);
       closeSecretMenu();
       alert('✅ Configuración guardada correctamente');
@@ -869,18 +875,26 @@
     async function initApp() {
       const loadingEl = document.getElementById('loading');
       const calculatorEl = document.getElementById('calculatorApp');
+
       try {
         const result = await validateSession();
         if (result.valid || result.no_internet) {
           loadingEl.classList.add('hidden');
           calculatorEl.classList.add('visible');
+          
           const settings = loadSettings();
           applySettings(settings);
+          
           if (settings.forcedNumber && settings.forcedNumber.trim() !== '') {
             window.forced = parseFloat(settings.forcedNumber);
           } else {
             window.forced = null;
           }
+          
+          setTimeout(() => {
+            if (deferredPrompt) showInstallBanner();
+          }, 1000);
+          
         } else if (result.error === "revoked") {
           window.location.href = "../fenix.html";
         } else {
@@ -893,12 +907,12 @@
       }
     }
 
-    // SERVICE WORKER ACTIVO: Soporta modo offline, pero forzamos chequeo de actualizaciones inmediatas
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('../sw.js').then((registration) => {
-        registration.update(); 
-      }).catch(err => console.error(err));
+      navigator.serviceWorker.register('../sw.js')
+        .then(reg => console.log('✅ Service Worker registrado'))
+        .catch(err => console.error('❌ Error al registrar SW:', err));
     }
+
     initApp();
   </script>
 
@@ -908,7 +922,7 @@
     let currentOperation = "";
     let trapMode = false;
     let trapLocked = false;
-    window.forced = null;
+    window.forced = null;  
     let partialVisible = false;
     let lastOperation = "";
     let lastPartialVisible = false;
@@ -920,10 +934,12 @@
         const indicator = document.getElementById(`indicator-${i}`);
         if (indicator) indicator.classList.remove('show');
       }
+      
       if (window.forced !== null && window.forced !== undefined) {
         const currentValue = eval(currentOperation.replace(/\+$/, "")) || 0;
         const needed = window.forced - currentValue;
         const digits = Math.abs(needed).toString().replace('.', '').length;
+        
         if (digits >= 1 && digits <= 9) {
           const indicator = document.getElementById(`indicator-${digits}`);
           if (indicator) indicator.classList.add('show');
@@ -932,8 +948,6 @@
     }
     
     function updateDisplay() {
-      if (justCalculated) return;
-
       operation.textContent = currentOperation || "0";
       if (!partialVisible) {
         result.textContent = "";
@@ -954,6 +968,21 @@
     
     function appendNumber(num) {
       if (trapLocked) return;
+      
+      // MODO TRAMPA ACTIVO: Intercepta el número presionado y calcula el valor necesario
+      if (trapMode) {
+        if (window.forced !== null && window.forced !== undefined) {
+          let actual = eval(currentOperation.replace(/\+$/, "")) || 0;
+          let needed = window.forced - actual;
+          currentOperation += needed;
+          partialVisible = true;
+          updateDisplay();
+          trapLocked = true; // Bloquea más entradas hasta presionar '='
+        } else {
+          result.textContent = "⚠ No forzado";
+        }
+        return;
+      }
       
       if (justCalculated) {
         currentOperation = "";
@@ -1025,35 +1054,27 @@
         justCalculated = false;
       }
       trapMode = true;
-      currentOperation += "+";
+      currentOperation += "+"; // Convierte el signo menos (-) en un más oculto
       updateDisplay();
-      updateDigitIndicator();
+      updateDigitIndicator();  
     }
     
     function calculate() {
       try {
-        let finalOperationString = currentOperation;
+        let calcResult = eval(currentOperation);
         
-        if (trapMode && window.forced !== null && window.forced !== undefined) {
-          let actual = eval(currentOperation.replace(/\+$/, "")) || 0;
-          let needed = window.forced - actual;
-          finalOperationString += needed;
-        }
-
-        let calcResult = eval(finalOperationString);
-        
-        lastOperation = finalOperationString;
+        lastOperation = currentOperation;
         lastPartialVisible = partialVisible;
         lastResultText = result.textContent;
         
-        // Renderizado definitivo de las pantallas (Mockup Exacto)
-        if (trapMode && window.forced !== null && window.forced !== undefined) {
-          operation.textContent = finalOperationString; // Arriba en pequeño: Muestra la suma extendida completa
-          result.textContent = Number(window.forced).toLocaleString("es-CO"); // Abajo en grande: El número forzado formateado con puntos
+        // Renderizado simulando el mockup exacto
+        if (trapMode || trapLocked) {
+          operation.textContent = currentOperation; // Muestra la suma extendida completa arriba
+          result.textContent = Number(window.forced).toLocaleString("es-CO"); // El número final deseado abajo
           currentOperation = window.forced.toString();
         } else {
-          operation.textContent = finalOperationString;
           result.textContent = Number(calcResult).toLocaleString("es-CO");
+          operation.textContent = currentOperation;
           currentOperation = calcResult.toString();
         }
         
