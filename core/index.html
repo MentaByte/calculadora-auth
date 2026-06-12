@@ -955,7 +955,7 @@
     }
     
     function updateDisplay() {
-      // Si acabamos de calcular, congelamos el display para evitar que parpadee o cambie
+      // Si acabamos de procesar el '=', congelamos la interfaz para evitar desconfiguraciones
       if (justCalculated) return;
 
       operation.textContent = currentOperation || "0";
@@ -983,7 +983,7 @@
         return;
       }
       
-      // Si presionas un número directo después de haber calculado, reinicia la pantalla
+      // Si escribes un número nuevo inmediatamente después de dar '=', se limpia la pantalla
       if (justCalculated) {
         currentOperation = "";
         justCalculated = false;
@@ -1009,7 +1009,7 @@
     
     function add() {
       if (trapLocked) return;
-      // Si vienes de un cálculo, permite seguir sumándole al total anterior
+      // Si presionas '+' tras un cálculo, heredas el número anterior para seguir sumando
       if (justCalculated) {
         justCalculated = false;
       }
@@ -1067,7 +1067,7 @@
         currentOperation += needed;
         justCalculated = false;
         
-        // Renderizado manual e inmediato del truco para congelarlo correctamente
+        // Renderizado forzado inmediato para pintar la pantalla tal cual el mockup
         operation.textContent = currentOperation;
         result.textContent = Number(window.forced).toLocaleString("es-CO");
         trapLocked = true;
@@ -1080,30 +1080,31 @@
       try {
         let calcResult = eval(currentOperation);
         
-        // Respaldos por si se presiona borrar (backspace) inmediatamente
+        // Guardamos respaldos por si se usa la tecla borrar (backspace)
         lastOperation = currentOperation;
         lastPartialVisible = partialVisible;
         lastResultText = result.textContent;
         
         if (trapMode) {
-          // Congela la pantalla tal cual el Mockup: operación completa arriba, total forzado abajo
+          // Arriba (pequeño): Muestra toda la secuencia matemática original
           operation.textContent = currentOperation;
+          // Abajo (grande): Muestra el gran total forzado formateado con puntos
           result.textContent = Number(window.forced).toLocaleString("es-CO");
           currentOperation = window.forced.toString();
         } else {
-          // Suma clásica estándar
+          // Operación estándar sin truco
           operation.textContent = currentOperation;
           result.textContent = Number(calcResult).toLocaleString("es-CO");
           currentOperation = calcResult.toString();
         }
         
-        // Resetear banderas de control y activar bloqueo temporal de refresco
+        // Cambiamos estados globales y activamos bloqueo de refresco
         trapMode = false;
         trapLocked = false;
         partialVisible = false;
         justCalculated = true;
         
-        // Ocultar indicadores visuales pequeños
+        // Ocultamos los indicadores pequeños de los botones
         for (let i = 1; i <= 9; i++) {
           const indicator = document.getElementById(`indicator-${i}`);
           if (indicator) indicator.classList.remove('show');
