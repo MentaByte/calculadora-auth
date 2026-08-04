@@ -392,7 +392,65 @@
       color: #6b5f00;
       font-weight: bold;
     }
-    
+
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .switch-row label {
+      margin-bottom: 0;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 51px;
+      height: 31px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .switch .slider-toggle {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #e9e9ea;
+      transition: 0.3s;
+      border-radius: 31px;
+    }
+
+    .switch .slider-toggle::before {
+      position: absolute;
+      content: "";
+      height: 27px;
+      width: 27px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .switch input:checked + .slider-toggle {
+      background-color: #34c759;
+    }
+
+    .switch input:checked + .slider-toggle::before {
+      transform: translateX(20px);
+    }
+
     .menu-item.primary {
       background: #fff3cd;
       border: 2px solid #6b5f00;
@@ -491,7 +549,17 @@
         <input type="number" id="forcedNumber" placeholder="Ingresa número a forzar" step="0.01">
         <button class="clear-operation-btn" onclick="clearCurrentOperation()">🗑️ Borrar suma actual</button>
       </div>
-      
+
+      <div class="menu-item">
+        <div class="switch-row">
+          <label>📱 Apariencia calculadora iPhone</label>
+          <label class="switch">
+            <input type="checkbox" id="iphoneStyleToggle" onchange="toggleIphoneStyle(this)">
+            <span class="slider-toggle"></span>
+          </label>
+        </div>
+      </div>
+
       <div class="menu-item">
         <label>🎨 Color botones numéricos:</label>
         <div class="color-row">
@@ -535,6 +603,7 @@
       <div class="menu-item">
         <label>🔤 Fuente:</label>
         <select id="fontFamily">
+          <option value="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif">SF Pro (iOS)</option>
           <option value="Roboto, sans-serif">Roboto</option>
           <option value="Arial, sans-serif">Arial</option>
           <option value="'Courier New', monospace">Courier</option>
@@ -818,7 +887,10 @@
       // Tamaño del indicador
       document.getElementById('indicatorSize').value = settings.indicatorSize;
       document.getElementById('indicatorSizeValue').textContent = settings.indicatorSize + 'px';
-      
+
+      // Apariencia calculadora iPhone
+      document.getElementById('iphoneStyleToggle').checked = !!settings.iphoneStyle;
+
       menu.classList.add('show');
       
       // Pedir versión al SW
@@ -831,11 +903,10 @@
       document.getElementById('secretMenu').classList.remove('show');
     }
     
-    window.saveSettings = function() {
-      const forcedValue = document.getElementById('forcedNumber').value;
-      
-      const settings = {
-        forcedNumber: forcedValue,
+    // Leer los valores actuales del formulario del menú
+    function getFormSettings() {
+      return {
+        forcedNumber: document.getElementById('forcedNumber').value,
         numBgColor: document.getElementById('numBgColor').value,
         specialBgColor: document.getElementById('specialBgColor').value,
         equalBgColor: document.getElementById('equalBgColor').value,
@@ -846,9 +917,49 @@
         btnFontSizePercent: document.getElementById('btnFontSize').value,
         settingsOpacity: document.getElementById('settingsOpacity').value,
         indicatorOpacity: document.getElementById('indicatorOpacity').value,
-        indicatorSize: document.getElementById('indicatorSize').value
+        indicatorSize: document.getElementById('indicatorSize').value,
+        iphoneStyle: document.getElementById('iphoneStyleToggle').checked
       };
-      
+    }
+
+    // Activar/desactivar la apariencia de calculadora iPhone
+    window.toggleIphoneStyle = function(checkbox) {
+      const preset = checkbox.checked ? {
+        numBgColor: '#333333',
+        specialBgColor: '#636366',
+        equalBgColor: '#ff9500',
+        bgColor: '#000000',
+        fontColor: '#ffffff',
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif"
+      } : {
+        numBgColor: '#fbd9d7',
+        specialBgColor: '#f9b9b6',
+        equalBgColor: '#6b5f00',
+        bgColor: '#fff8f7',
+        fontColor: '#000000',
+        fontFamily: 'Roboto, sans-serif'
+      };
+
+      document.getElementById('numBgColor').value = preset.numBgColor;
+      document.getElementById('numBgHex').value = preset.numBgColor.toUpperCase();
+      document.getElementById('specialBgColor').value = preset.specialBgColor;
+      document.getElementById('specialBgHex').value = preset.specialBgColor.toUpperCase();
+      document.getElementById('equalBgColor').value = preset.equalBgColor;
+      document.getElementById('equalBgHex').value = preset.equalBgColor.toUpperCase();
+      document.getElementById('bgColor').value = preset.bgColor;
+      document.getElementById('bgColorHex').value = preset.bgColor.toUpperCase();
+      document.getElementById('fontColor').value = preset.fontColor;
+      document.getElementById('fontColorHex').value = preset.fontColor.toUpperCase();
+      document.getElementById('fontFamily').value = preset.fontFamily;
+
+      // Previsualizar de inmediato
+      applySettings(getFormSettings());
+    }
+
+    window.saveSettings = function() {
+      const settings = getFormSettings();
+      const forcedValue = settings.forcedNumber;
+
       localStorage.setItem('calcSettings', JSON.stringify(settings));
       
       // CRÍTICO: Actualizar el número forzado globalmente
@@ -882,9 +993,10 @@
         btnFontSizePercent: '100',
         settingsOpacity: '30',
         indicatorOpacity: '40',
-        indicatorSize: '8'
+        indicatorSize: '8',
+        iphoneStyle: false
       };
-      
+
       applySettings(defaults);
       window.forced = null;
       closeSecretMenu();
@@ -910,10 +1022,11 @@
         btnFontSizePercent: '100',
         settingsOpacity: '30',
         indicatorOpacity: '40',
-        indicatorSize: '8'
+        indicatorSize: '8',
+        iphoneStyle: false
       };
     }
-    
+
     function applySettings(settings) {
       const root = document.documentElement;
       
