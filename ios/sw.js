@@ -3,7 +3,7 @@
    Versión iOS: optimizado para Safari/WebKit
    =============================================== */
 
-const CACHE_NAME = 'calculadora-ios-v1.1';
+const CACHE_NAME = 'calculadora-ios-v1.2';
 
 const BASE = self.location.pathname.replace(/sw\.js$/, '');
 
